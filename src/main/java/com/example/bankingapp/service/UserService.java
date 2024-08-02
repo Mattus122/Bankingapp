@@ -1,17 +1,16 @@
 package com.example.bankingapp.service;
 
+import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.entity.User;
 import com.example.bankingapp.exception.UserAlreadyExistsException;
 import com.example.bankingapp.exception.UserNotFoundExcetion;
 import com.example.bankingapp.repository.UserRepository;
 import com.example.bankingapp.timedinterface.Timed;
+import com.example.bankingapp.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,87 +20,99 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final ValidationService validationService;
+
     @Timed
-    public ResponseEntity<UserDTO> add(User user) {
-        User newUser = User.builder().firstName(user.getFirstName()).lastName(user.getLastName()).email(user.getEmail())
-                .password(user.getPassword()).dob(user.getDob()).build();
-        String mail = user.getEmail();
-        Optional<User> findBymail = userRepository.findByEmail(mail);
-        if(!findBymail.isPresent()){
-            UserDTO u1 = convertToDTO(user);
-            User savedUser  = userRepository.save(newUser);
-            return new ResponseEntity<>( u1 , HttpStatus.CREATED);
-        }else{
-            throw new UserAlreadyExistsException("User Already Exists in Database ");
+    public UserDTO add(User user , String token) throws Exception {
+//        User newUser  = User.builder().firstName(user.getFirstName()).email(user.getEmail()).password(user.getPassword())
+//                .dob(user.getDob()).build();
+        validationService.validateToken(token);
+        String email = user.getEmail();
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            throw new UserAlreadyExistsException("User already exists in the database.");
         }
-
+        User savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
     }
+
     @Timed
-    public ResponseEntity<List<User>> returnAllUser(){
-        List<User> userlist = new ArrayList<User>();
-        userRepository.findAll().forEach(userlist::add);
-        if(userlist.isEmpty()){
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    public List<UserDTO> returnAllUser(String token) {
+        validationService.validateToken(token);
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Timed
+    public UserDTO updateUser(UUID userId, User newUserData) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setFirstName(newUserData.getFirstName());
+            user.setLastName(newUserData.getLastName());
+            user.setEmail(newUserData.getEmail());
+            user.setDob(newUserData.getDob());
+            user.setPassword(newUserData.getPassword());
+            User updatedUser = userRepository.save(user);
+            return convertToDTO(updatedUser);
+        } else {
+            throw new UserNotFoundExcetion("User not found with id: " + userId);
         }
-        return new ResponseEntity<>(userlist,HttpStatus.OK);
-        // try using Dto so you donot return the password.
-//        return (ResponseEntity<List<User>>) userlist.stream()
-//                .map(this::convertToDTO)
-//                .collect(Collectors.toList());
-
     }
-    private UserDTO convertToDTO(User user) {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setFirstName(user.getFirstName());
-        userDTO.setLastName(user.getLastName());
-        userDTO.setDob(user.getDob());
-        return userDTO;
-    }
+//
+//    public UserDTO update(User newUserData, UUID userId) {
+//        Optional<User> oldUserData = userRepository.findById(userId);
+//
+//            if(oldUserData.isPresent()){
+//                User updateuser = oldUserData.get();
+//                updateuser.setFirstName(newUserData.getFirstName());
+//                updateuser.setLastName(newUserData.getLastName());
+//                updateuser.setEmail(newUserData.getEmail());
+//                updateuser.setDob(newUserData.getDob());
+//                userRepository.save(updateuser);
+//                UserDTO u = convertToDTO(updateuser);
+//                return new ResponseEntity<>(u  , HttpStatus.OK);
+//
+//            }
+//            else {
+//                throw new UserNotFoundExcetion("Cannot Find user at given UUID" + userId);
+//            }
+//
+//
+//
+//    }
     @Timed
-
-    public ResponseEntity<UserDTO> update(User newUserData, UUID userId) {
-        Optional<User> oldUserData = userRepository.findById(userId);
-
-            if(oldUserData.isPresent()){
-                User updateuser = oldUserData.get();
-                updateuser.setFirstName(newUserData.getFirstName());
-                updateuser.setLastName(newUserData.getLastName());
-                updateuser.setEmail(newUserData.getEmail());
-                updateuser.setDob(newUserData.getDob());
-                userRepository.save(updateuser);
-                UserDTO u = convertToDTO(updateuser);
-                return new ResponseEntity<>(u  , HttpStatus.OK);
-
-            }
-            else {
-                throw new UserNotFoundExcetion("Cannot Find user at given UUID" + userId);
-            }
-
-
-
-    }
-    @Timed
-
-    public ResponseEntity<HttpStatus> delete(UUID userId) {
-        Optional<User> byId = userRepository.findById(userId);
-        if(byId.isPresent()){
+    public void deleteUserById(UUID userId) {
+        if (userRepository.existsById(userId)) {
             userRepository.deleteById(userId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        else {
-            throw new UserNotFoundExcetion("Cannot find User at id : "+userId);
+        } else {
+            throw new UserNotFoundExcetion("User not found with id: " + userId);
         }
     }
-
-    public ResponseEntity<UserDTO> findById(UUID userId) {
+    public UserDTO findUserById(UUID userId) {
         Optional<User> byId = userRepository.findById(userId);
         if(byId.isPresent()){
             UserDTO userDTO = convertToDTO(byId.get());
-            return new ResponseEntity<>(userDTO , HttpStatus.FOUND);
-
+            return userDTO ;
         }
         else{
             throw new UserNotFoundExcetion("No user found at gven id : "+userId);
         }
+    }
+    private  UserDTO convertToDTO(User user) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setEmail(user.getEmail());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setDob(user.getDob());
+        userDTO.setAge(user.getAge());
+        return userDTO;
+    }
+    public JwtTokenResponse generateToken(User user) {
+        String token = jwtService.generateToken(user);
+        return JwtTokenResponse.builder().accessToken(token).build();
     }
 }

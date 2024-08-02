@@ -1,5 +1,6 @@
 package com.example.bankingapp.repository;
 
+import com.example.bankingapp.entity.Account;
 import com.example.bankingapp.entity.Transaction;
 import com.example.bankingapp.entity.TransactionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;

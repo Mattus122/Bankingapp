@@ -37,7 +37,7 @@ public class TransactionService {
 //        }
 //
 //    }
-    public ResponseEntity<TransactionDTO> createTransaction(UUID accountId, Transaction transaction) throws AccountNotFoundException
+    public TransactionDTO createTransaction(UUID accountId, Transaction transaction) throws AccountNotFoundException
 
     {
         Account account = accountRepository.findById(accountId)
@@ -50,21 +50,17 @@ public class TransactionService {
             .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
-        return new ResponseEntity<>(convertToDTO(savedTransaction), HttpStatus.CREATED);
+        return convertToDTO(savedTransaction);
+
     }
 
-    public ResponseEntity<List<TransactionDTO>> getAllTransactions() {
+    public List<TransactionDTO> getAllTransactions() {
         List<Transaction> transactions = transactionRepository.findAll();
 
-        if (transactions.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-
-        List<TransactionDTO> transactionDTOs = transactions.stream()
+        List<TransactionDTO> transactionDTOList = transactions.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-
-        return new ResponseEntity<>(transactionDTOs, HttpStatus.OK);
+        return transactionDTOList;
     }
     public List<TransactionDTO> getTransactionsByUserId(UUID userId) {
         List<Transaction> transactions = transactionRepository.findTransactionsByUserId(userId);

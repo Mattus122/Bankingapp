@@ -1,6 +1,8 @@
 package com.example.bankingapp.controller;
 
 import com.example.bankingapp.dto.AccountDTO;
+import com.example.bankingapp.entity.Account;
+import com.example.bankingapp.exception.AccountNotFound;
 import com.example.bankingapp.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +35,9 @@ public class AccountController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
     @GetMapping("/account/{userId}")
-    List<AccountDTO> getaccountInfo(@PathVariable UUID userId) throws Exception {
-        return accountService.getAccountInformation(userId);
+    ResponseEntity<List<AccountDTO>> getaccountInfo(@PathVariable UUID userId ) throws Exception {
+        List<AccountDTO>accountDTOList =  accountService.getAccountInformation(userId);
+        return new ResponseEntity<>(accountDTOList , HttpStatus.OK);
 
     }
     @Operation(
@@ -48,8 +52,32 @@ public class AccountController {
     })
 
     @PostMapping("/account/{userId}")
-    ResponseEntity<AccountDTO> createanaccount(@PathVariable UUID userId , @RequestBody AccountDTO accountDto) throws Exception {
-        return accountService.createaccount(userId , accountDto);
+    ResponseEntity<AccountDTO> create(@PathVariable UUID userId , @RequestBody Account account) throws Exception {
+        AccountDTO accountDTO = accountService.createaccount(userId , account);
+        return new ResponseEntity<>(accountDTO , HttpStatus.CREATED);
     }
+    @PutMapping("account/{accountId}")
+    public ResponseEntity<AccountDTO> updateAccount(@PathVariable UUID accountId, @RequestBody AccountDTO accountDTO) {
+        try {
+            AccountDTO updatedAccount = accountService.updateAccount(accountId, accountDTO);
+            return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
+        } catch (AccountNotFound e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @DeleteMapping("account/{accountId}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable UUID accountId) {
+        try {
+            accountService.deleteAccount(accountId);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (AccountNotFound e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
 

@@ -3,9 +3,11 @@ package com.example.bankingapp.service;
 import com.example.bankingapp.dto.AccountDTO;
 import com.example.bankingapp.entity.Account;
 import com.example.bankingapp.entity.User;
+import com.example.bankingapp.exception.AccountNotFound;
 import com.example.bankingapp.exception.UserNotFoundExcetion;
 import com.example.bankingapp.repository.AccountRepository;
 import com.example.bankingapp.repository.UserRepository;
+import com.example.bankingapp.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.AccountNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -21,18 +24,19 @@ import java.util.stream.Collectors;
 public class AccountService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
-
-    public ResponseEntity<AccountDTO> createaccount(UUID userId, AccountDTO accountDto) throws Exception {
+    private final ValidationService validationService;
+    public AccountDTO createaccount (UUID userId, Account account) throws Exception {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundExcetion("User not found for id : "+userId));
-        Account account = new Account();
-        account.setName(accountDto.getName());
-        account.setBalance(accountDto.getBalance());
-        account.setCurrency(accountDto.getCurrency());
-        account.setAccountStatus(accountDto.getAccountStatus());
+//
+//        Account newAccount = new Account();
+//        account.setName(account.getName());
+//        account.setBalance(account.getBalance());
+//        account.setCurrency(account.getCurrency());
+//        account.setAccountStatus(account.getAccountStatus());
         account.setUser(user);
 
         Account savedAccount = accountRepository.save(account);
-        return new ResponseEntity<>(accountDto , HttpStatus.CREATED);
+        return convertEntityTOAccountDto(savedAccount);
 //        Optional<User> findbyid = userRepository.findById(userId);
 //        User user = null;
 //        if (findbyid.isPresent()) {
@@ -90,7 +94,6 @@ public class AccountService {
     public List<AccountDTO> getAccountInformation(UUID userId) throws Exception {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundExcetion("No user present with user ID " + userId));
-
         List<Account> accounts = accountRepository.findByUserId(userId);
         if(accounts.isEmpty()){
             throw new AccountNotFoundException("No account exists for id" +userId);
@@ -107,4 +110,31 @@ public class AccountService {
         accountDto.setBalance(account.getBalance());
         return accountDto;
     }
+
+    public AccountDTO updateAccount(UUID accountId, AccountDTO accountDTO) {
+        Optional<Account> accountOptional = accountRepository.findById(accountId);
+
+        if (!accountOptional.isPresent()) {
+            throw new AccountNotFound("Account not found with id: " + accountId);
+        }
+
+        Account account = accountOptional.get();
+        account.setName(accountDTO.getName());
+        account.setBalance(accountDTO.getBalance());
+        account.setCurrency(accountDTO.getCurrency());
+        account.setAccountStatus(accountDTO.getAccountStatus());
+
+        Account updatedAccount = accountRepository.save(account);
+
+        return convertEntityTOAccountDto(updatedAccount);
+    }
+
+    public void deleteAccount(UUID accountId) {
+        if (!accountRepository.existsById(accountId)) {
+            throw new AccountNotFound("Account not found with id: " + accountId);
+        }
+
+        accountRepository.deleteById(accountId);
+    }
 }
+

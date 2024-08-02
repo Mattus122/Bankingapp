@@ -18,11 +18,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Builder
-public class User{
+public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column
+    @Column(nullable = false)
     private String email;
     @Column
     private String password;

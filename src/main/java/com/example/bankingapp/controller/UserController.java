@@ -1,6 +1,7 @@
 package com.example.bankingapp.controller;
 
 import com.example.bankingapp.dto.TransactionDTO;
+import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.entity.Transaction;
 import com.example.bankingapp.entity.User;
@@ -32,6 +33,7 @@ public class UserController {
     private final TransactionService transactionService;
     Logger logger = LoggerFactory.getLogger(UserController.class);
 
+
     @Operation(
             summary = "Create a User",
             description = "Create a User Object. The response is a UserDTO containing firstname, lastname, and dob."
@@ -41,10 +43,16 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid input", content = { @Content(schema = @Schema()) }),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
+
     @PostMapping("/user")
-    public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
-        UserDTO createdUserDTO = userService.add(user).getBody();
+    public ResponseEntity<UserDTO> createUser(@RequestBody User user , @RequestHeader("Authorization") String token ) throws Exception {
+        UserDTO createdUserDTO = userService.add(user  ,token);
         return new ResponseEntity<>(createdUserDTO, HttpStatus.CREATED);
+    }
+    @PostMapping("/user/generateToken")
+    public ResponseEntity<JwtTokenResponse> generateJwtToken(@RequestBody User user){
+        JwtTokenResponse jwtTokenResponse = userService.generateToken(user);
+        return new ResponseEntity<>(jwtTokenResponse, HttpStatus.OK);
     }
     @Operation(
             summary = "Retrieve all users",
@@ -55,9 +63,12 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
     @GetMapping("/user")
-    ResponseEntity<List<User>> getAllUsers(){
-        return userService.returnAllUser();
-
+    public ResponseEntity<List<UserDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
+        List<UserDTO> userDTOList = userService.returnAllUser(token);
+        if (userDTOList.isEmpty()) {
+            return new ResponseEntity<>(userDTOList , HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(userDTOList, HttpStatus.OK);
     }
     @Operation(
             summary = "Find User by ID",
@@ -70,7 +81,8 @@ public class UserController {
     })
     @GetMapping ("/user/{userId}")
     ResponseEntity<UserDTO> findUserById(@PathVariable UUID userId){
-        return userService.findById(userId);
+        UserDTO user = userService.findUserById(userId);
+        return new ResponseEntity<>(user , HttpStatus.FOUND);
     }
     @Operation(
             summary = "Update a user by id",
@@ -81,8 +93,9 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
     @PutMapping("/user/{userId}")
-    ResponseEntity<UserDTO> updateUser(@RequestBody User newUserData , @PathVariable UUID userId){
-        return userService.update(newUserData , userId);
+    public ResponseEntity<UserDTO> updateUser(@RequestBody User newUserData , @PathVariable UUID userId) {
+        UserDTO updatedUser = userService.updateUser(userId, newUserData);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 
     @Operation(
@@ -96,8 +109,9 @@ public class UserController {
     })
 
     @DeleteMapping("/user/{userId}")
-    ResponseEntity<HttpStatus> deleteUSer(@PathVariable UUID userId){
-        return  userService.delete(userId);
+    public ResponseEntity<Void> deleteUserById(@PathVariable UUID userId) {
+        userService.deleteUserById(userId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @Operation(

@@ -2,6 +2,7 @@ package com.example.bankingapp.controller;
 
 import com.example.bankingapp.dto.TransactionDTO;
 import com.example.bankingapp.entity.Transaction;
+import com.example.bankingapp.entity.TransactionStatus;
 import com.example.bankingapp.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +36,8 @@ public class TransactionController {
     })
     @PostMapping("/transaction/{accountId}")
     public ResponseEntity<TransactionDTO> createTransaction(@PathVariable UUID accountId, @RequestBody Transaction transaction) throws AccountNotFoundException {
-        return transactionService.createTransaction(accountId, transaction);
+        TransactionDTO createdTransactionDTO = transactionService.createTransaction(accountId, transaction);
+        return new ResponseEntity<>(createdTransactionDTO , HttpStatus.CREATED);
     }
     @Operation(
             summary = "Get All Transactions",
@@ -47,6 +50,10 @@ public class TransactionController {
     })
     @GetMapping("/transactions")
     ResponseEntity<List<TransactionDTO>> getAllTransactions(){
-        return transactionService.getAllTransactions();
+        List<TransactionDTO> allTransactions = transactionService.getAllTransactions();
+        if(allTransactions.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(allTransactions , HttpStatus.OK);
     }
 }

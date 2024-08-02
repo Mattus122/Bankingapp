@@ -12,7 +12,5 @@ public class AccountNotFound extends RuntimeException{
         super(message, cause);
     }
 
-    public AccountNotFound(Throwable cause) {
-        super(cause);
-    }
+
 }

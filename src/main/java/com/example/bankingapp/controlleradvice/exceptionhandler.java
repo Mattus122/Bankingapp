@@ -2,6 +2,7 @@ package com.example.bankingapp.controlleradvice;
 
 import com.example.bankingapp.dto.ErrorObject;
 import com.example.bankingapp.exception.AccountNotFound;
+import com.example.bankingapp.exception.InvalidJwtToken;
 import com.example.bankingapp.exception.UserAlreadyExistsException;
 import com.example.bankingapp.exception.UserNotFoundExcetion;
 import org.springframework.http.HttpStatus;
@@ -27,8 +28,13 @@ public class exceptionhandler {
         return new ResponseEntity<>(er , HttpStatus.CONFLICT);
     }
     @ExceptionHandler
-    public ResponseEntity<ErrorObject> Exception3(AccountNotFound e){
+    public ResponseEntity<ErrorObject> Exception4(AccountNotFound e){
         ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.NO_CONTENT.value()).timestamp(System.currentTimeMillis()).build();
         return new ResponseEntity<>(er , HttpStatus.NO_CONTENT);
+    }
+    @ExceptionHandler
+    public ResponseEntity<ErrorObject> Excetion(InvalidJwtToken e){
+        ErrorObject er =  ErrorObject.builder().timestamp(System.currentTimeMillis()).status(HttpStatus.REQUEST_TIMEOUT.value()).message(e.getMessage()).build();
+        return new ResponseEntity<>(er , HttpStatus.REQUEST_TIMEOUT);
     }
 }
