@@ -1,66 +1,105 @@
 package com.example.bankingapp.service;
 
+import com.example.bankingapp.controller.UserController;
+import com.example.bankingapp.dto.JwtTokenDTO;
 import com.example.bankingapp.dto.JwtTokenResponse;
+import com.example.bankingapp.dto.ResponseUserDTO;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.entity.User;
-import com.example.bankingapp.exception.UserAlreadyExistsException;
-import com.example.bankingapp.exception.UserNotFoundExcetion;
+import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
+import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
+import com.example.bankingapp.exception.userexception.UserAlreadyExistsException;
+import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
+import com.example.bankingapp.repository.AccountRepository;
+import com.example.bankingapp.repository.TransactionRepository;
 import com.example.bankingapp.repository.UserRepository;
 import com.example.bankingapp.timedinterface.Timed;
 import com.example.bankingapp.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final ValidationService validationService;
-
+    private final TransactionRepository transactionRepository;
+    Logger logger = LoggerFactory.getLogger(UserController.class);
     @Timed
-    public UserDTO add(User user , String token) throws Exception {
-//        User newUser  = User.builder().firstName(user.getFirstName()).email(user.getEmail()).password(user.getPassword())
-//                .dob(user.getDob()).build();
-        validationService.validateToken(token);
-        String email = user.getEmail();
-        Optional<User> existingUser = userRepository.findByEmail(email);
-        if (existingUser.isPresent()) {
-            throw new UserAlreadyExistsException("User already exists in the database.");
+    public ResponseUserDTO add(UserDTO userDTO, String token , String requestType) throws Exception {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
         }
-        User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+        if(validationService.validateToken(token , "POST")){
+            User newUser  = User.builder().firstName(userDTO.getFirstName()).lastName(userDTO.getLastName())
+                    .role(userDTO.getRole()).email(userDTO.getEmail()).password(userDTO.getPassword()).age(userDTO.getAge())
+                    .build();
+            String email = newUser.getEmail();
+            Optional<User> existingUser = userRepository.findByEmail(email);
+            if (existingUser.isPresent()) {
+                throw new UserAlreadyExistsException("User already exists in the database.");
+            }
+            User savedUser = userRepository.save(newUser);
+            return convertToDTO(newUser);
+
+        }
+        return null;
+        //extract this from jwt and check in the validation service itself , try to minimize no. of DB calls if possible  , if the code doesnot work just retain the old code and make it working proper . thanks
+
     }
 
     @Timed
-    public List<UserDTO> returnAllUser(String token) {
-        validationService.validateToken(token);
-        List<User> users = userRepository.findAll();
-        return users.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<ResponseUserDTO> returnAllUser(String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        if(validationService.validateToken(token , "GET") && validationService.returnRole(token).equals("ADMIN")){
+            List<User> users = userRepository.findAll();
+            return users.stream()
+                    .map(this::convertToDTO )
+                    .collect(Collectors.toList());
+        } else  {
+            List<ResponseUserDTO> responseUserDTOList = new ArrayList<>();
+            String email = validationService.getEmailFromToken(token);
+            Optional<User> user= userRepository.findByEmail(email);
+            // no need for checking if user is present in Db bcz token wont be created untill user already exists in db.
+            ResponseUserDTO responseUserDTO = convertToDTO(user.get());
+            responseUserDTOList.add(responseUserDTO);
+            return responseUserDTOList;
+        }
     }
 
     @Timed
-    public UserDTO updateUser(UUID userId, User newUserData) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setFirstName(newUserData.getFirstName());
-            user.setLastName(newUserData.getLastName());
-            user.setEmail(newUserData.getEmail());
-            user.setDob(newUserData.getDob());
-            user.setPassword(newUserData.getPassword());
-            User updatedUser = userRepository.save(user);
-            return convertToDTO(updatedUser);
-        } else {
-            throw new UserNotFoundExcetion("User not found with id: " + userId);
+    public ResponseUserDTO updateUser(UUID userId, UserDTO userDTO , String token , String requestType) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
         }
+        if(validationService.validateToken(token , "PUT")){
+            Optional<User> userOptional = userRepository.findById(userId);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                user.setFirstName(userDTO.getFirstName());
+                user.setLastName(userDTO.getLastName());
+                user.setEmail(userDTO.getEmail());
+                user.setPassword(userDTO.getPassword());
+                user.setRole(userDTO.getRole());
+                user.setAge(userDTO.getAge());
+                User updatedUser = userRepository.save(user);
+                return convertToDTO(updatedUser);
+            } else {
+                throw new UserNotFoundExcetion("User not found with id: " + userId);
+            }
+        }
+        throw new InvalidJwtToken("Pata nhi kya hua ");
+
+
     }
 //
 //    public UserDTO update(User newUserData, UUID userId) {
@@ -85,34 +124,65 @@ public class UserService {
 //
 //    }
     @Timed
-    public void deleteUserById(UUID userId) {
-        if (userRepository.existsById(userId)) {
-            userRepository.deleteById(userId);
-        } else {
-            throw new UserNotFoundExcetion("User not found with id: " + userId);
+    public void deleteUserById(UUID userId , String token  , String requestType) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
         }
-    }
-    public UserDTO findUserById(UUID userId) {
-        Optional<User> byId = userRepository.findById(userId);
-        if(byId.isPresent()){
-            UserDTO userDTO = convertToDTO(byId.get());
-            return userDTO ;
+        if(validationService.validateToken(token , "DELETE")){
+            if (userRepository.existsById(userId)) {
+                userRepository.deleteById(userId);
+            } else {
+                throw new UserNotFoundExcetion("User not found with id: " + userId);
+            }
         }
-        else{
-            throw new UserNotFoundExcetion("No user found at gven id : "+userId);
+
+    }
+    public ResponseUserDTO findUserById(UUID userId , String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
         }
+        if(validationService.returnRole(token).equals("USER")){
+            String email = validationService.getEmailFromToken(token);
+            Optional<User> optionalUser = userRepository.findByEmail(email);
+            if(optionalUser.get().getId().equals(userId)){
+                ResponseUserDTO responseUserDTO = convertToDTO(optionalUser.get());
+                return responseUserDTO;
+            }
+            throw new ForbiddenRequestException("Cannot Access other Users Information");
+
+        } else if (validationService.returnRole(token).equals("ADMIN")) {
+            Optional<User> byId = userRepository.findById(userId);
+            if(byId.isPresent()){
+                ResponseUserDTO responseUserDTO = convertToDTO(byId.get());
+                return responseUserDTO;
+            }
+            else{
+                throw new UserNotFoundExcetion("No user found at gven id : "+userId);
+            }
+        }
+        return null;
+
     }
-    private  UserDTO convertToDTO(User user) {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setEmail(user.getEmail());
-        userDTO.setFirstName(user.getFirstName());
-        userDTO.setLastName(user.getLastName());
-        userDTO.setDob(user.getDob());
-        userDTO.setAge(user.getAge());
-        return userDTO;
+    private ResponseUserDTO convertToDTO(User user) {
+        ResponseUserDTO responseUserDTO = new ResponseUserDTO();
+        responseUserDTO.setId(user.getId());
+        responseUserDTO.setRole(user.getRole());
+        responseUserDTO.setEmail(user.getEmail());
+        responseUserDTO.setFirstName(user.getFirstName());
+        responseUserDTO.setLastName(user.getLastName());
+        return responseUserDTO;
     }
-    public JwtTokenResponse generateToken(User user) {
-        String token = jwtService.generateToken(user);
-        return JwtTokenResponse.builder().accessToken(token).build();
+    public JwtTokenResponse generateToken(JwtTokenDTO jwtTokenDTO ) {
+        Optional<User> findBy = userRepository.findByEmail(jwtTokenDTO.getEmail());
+        if(findBy.isPresent() && findBy.get().getRole().equals(jwtTokenDTO.getRole()) ){
+
+            String token = jwtService.generateToken(jwtTokenDTO);
+            return JwtTokenResponse.builder().accessToken(token).build();
+        }
+        throw new InvalidJwtToken("Invalid Credentials");
+
     }
+
+
+
 }

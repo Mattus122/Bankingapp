@@ -1,8 +1,6 @@
 package com.example.bankingapp.controller;
 
 import com.example.bankingapp.dto.AccountDTO;
-import com.example.bankingapp.entity.Account;
-import com.example.bankingapp.exception.AccountNotFound;
 import com.example.bankingapp.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,7 +8,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Account" , description = "Account Management Api ")
 public class AccountController {
+    Logger logger = LoggerFactory.getLogger(AccountController.class);
     private final AccountService accountService;
 
     @Operation(
@@ -34,9 +36,9 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "User not found", content = { @Content(schema = @Schema()) }),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
-    @GetMapping("/account/{userId}")
-    ResponseEntity<List<AccountDTO>> getaccountInfo(@PathVariable UUID userId ) throws Exception {
-        List<AccountDTO>accountDTOList =  accountService.getAccountInformation(userId);
+    @GetMapping("/user/{userId}/account")
+    ResponseEntity<List<AccountDTO>> getaccountInfo(@PathVariable UUID userId , @RequestHeader("Authorization") String token ) throws Exception {
+        List<AccountDTO>accountDTOList =  accountService.getAccountInformation(userId , token);
         return new ResponseEntity<>(accountDTOList , HttpStatus.OK);
 
     }
@@ -51,32 +53,28 @@ public class AccountController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
 
-    @PostMapping("/account/{userId}")
-    ResponseEntity<AccountDTO> create(@PathVariable UUID userId , @RequestBody Account account) throws Exception {
-        AccountDTO accountDTO = accountService.createaccount(userId , account);
-        return new ResponseEntity<>(accountDTO , HttpStatus.CREATED);
+    @PostMapping("user/{userId}/account")
+    ResponseEntity<AccountDTO> create(@PathVariable UUID userId ,  @Valid @RequestBody  AccountDTO accountDTO , @RequestHeader("Authorization") String token) throws Exception {
+        AccountDTO createdAccount = accountService.createaccount(userId , accountDTO , token);
+        return new ResponseEntity<>(createdAccount , HttpStatus.CREATED);
     }
-    @PutMapping("account/{accountId}")
-    public ResponseEntity<AccountDTO> updateAccount(@PathVariable UUID accountId, @RequestBody AccountDTO accountDTO) {
-        try {
-            AccountDTO updatedAccount = accountService.updateAccount(accountId, accountDTO);
-            return new ResponseEntity<>(updatedAccount, HttpStatus.OK);
-        } catch (AccountNotFound e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @PutMapping("user/account/{accountId}")
+    public ResponseEntity<AccountDTO> updateAccount(@PathVariable UUID accountId, @Valid @RequestBody  AccountDTO accountDTO , @RequestHeader("Authorization") String token) {
+        AccountDTO acc = accountService.updateAccount(accountId ,accountDTO , token);
+        return new ResponseEntity<>(acc , HttpStatus.OK);
     }
-    @DeleteMapping("account/{accountId}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable UUID accountId) {
-        try {
-            accountService.deleteAccount(accountId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (AccountNotFound e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @DeleteMapping("/user/account/{accountId}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable UUID accountId , @RequestHeader("Authorization") String token) {
+        accountService.deleteAccount(accountId , token);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//        try {
+//            accountService.deleteAccount(accountId);
+//            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//        } catch (AccountNotFound e) {
+//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//        } catch (Exception e) {
+//            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
     }
 
 }

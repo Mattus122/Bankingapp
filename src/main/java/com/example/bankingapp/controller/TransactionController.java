@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +35,9 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Account not found", content = { @Content(schema = @Schema()) }),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
-    @PostMapping("/transaction/{accountId}")
-    public ResponseEntity<TransactionDTO> createTransaction(@PathVariable UUID accountId, @RequestBody Transaction transaction) throws AccountNotFoundException {
-        TransactionDTO createdTransactionDTO = transactionService.createTransaction(accountId, transaction);
+    @PostMapping("user/account/{accountId}/transactions")
+    public ResponseEntity<TransactionDTO> createTransaction(@PathVariable UUID accountId, @RequestBody @Valid TransactionDTO transactionDTO , @RequestHeader("Authorization") String token ) throws AccountNotFoundException {
+        TransactionDTO createdTransactionDTO = transactionService.createTransaction(accountId, transactionDTO , token);
         return new ResponseEntity<>(createdTransactionDTO , HttpStatus.CREATED);
     }
     @Operation(
@@ -49,11 +50,20 @@ public class TransactionController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
     @GetMapping("/transactions")
-    ResponseEntity<List<TransactionDTO>> getAllTransactions(){
-        List<TransactionDTO> allTransactions = transactionService.getAllTransactions();
+    ResponseEntity<List<TransactionDTO>> getAllTransactions(@RequestHeader("Authorization") String token){
+        List<TransactionDTO> allTransactions = transactionService.getAllTransactions(token);
         if(allTransactions.isEmpty()){
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(allTransactions , HttpStatus.OK);
     }
+    @GetMapping("user/{userId}/account/transactions")
+    public ResponseEntity<List<TransactionDTO>> getTransactionsByUserId(@PathVariable UUID userId , @RequestHeader("Authorization") String token ) {
+        List<TransactionDTO> transactions = transactionService.getTransactionsByUserId(userId , token);
+        if (transactions.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
+    }
+
 }

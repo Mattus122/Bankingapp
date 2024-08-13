@@ -15,6 +15,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@NamedQuery(
+        name = "Transaction.findAllByUserId",
+        query = "SELECT t FROM Transaction t " +
+                "JOIN t.account a " +
+                "JOIN a.user u " +
+                "WHERE u.id = :userId"
+)
 public class Transaction {
     @Id
     @Column(name = "transaction_id" )
@@ -26,9 +33,9 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_status")
     private TransactionStatus transactionStatus;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
-    @JoinColumn(name = "account_id")
+    @JoinColumn(name = "account_id" , nullable = false)
     private Account account;
 
 }
