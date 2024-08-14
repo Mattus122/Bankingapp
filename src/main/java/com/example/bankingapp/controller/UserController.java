@@ -5,9 +5,7 @@ import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.dto.ResponseUserDTO;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.entity.User;
-import com.example.bankingapp.service.TransactionService;
 import com.example.bankingapp.service.UserService;
-import com.example.bankingapp.validation.ValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,8 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,9 +29,6 @@ import java.util.UUID;
 @Tag(name = "User" , description = "User Management Api ")
 public class UserController {
     private final UserService userService;
-    private final TransactionService transactionService;
-    private final ValidationService validationService;
-    Logger logger = LoggerFactory.getLogger(UserController.class);
 
 
     @Operation(
@@ -62,7 +56,7 @@ public class UserController {
     })
     @PostMapping("/user/generateToken")
     public ResponseEntity<JwtTokenResponse> generateJwtToken(@RequestBody JwtTokenDTO jwtTokenDTO){
-        JwtTokenResponse jwtTokenResponse = userService.generateToken(jwtTokenDTO );
+        JwtTokenResponse jwtTokenResponse = userService.createJwtToken(jwtTokenDTO );
         return new ResponseEntity<>(jwtTokenResponse, HttpStatus.OK);
     }
     @Operation(
@@ -121,7 +115,7 @@ public class UserController {
     }
     @Operation(
             summary = "Update a user by id",
-            description = "Fetches a list of all users in the systemand then find the user by id and updates it."
+            description = "Fetches a list of all users in the system and then find the user by id and updates it."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Users Updated successfully", content = { @Content(schema = @Schema(implementation = User.class), mediaType = "application/json") }),

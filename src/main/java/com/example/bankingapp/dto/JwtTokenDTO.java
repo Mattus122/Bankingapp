@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class JwtTokenDTO {
     private String email;
-    private Role role;
+    private String password;
+
 
 }

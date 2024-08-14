@@ -40,6 +40,9 @@ public class ValidationService {
     public String getEmailFromToken(String token) {
         return extractAllClaims(token).get("email", String.class);
     }
+    public String getPasswordFromToken(String token){
+        return extractAllClaims(token).get("password", String.class);
+    }
     public String getSubjectFromToken(String token) {
         return extractAllClaims(token).getSubject();
     }

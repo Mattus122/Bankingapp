@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class TimingAspect {
 
-    @Around("@annotation(com.example.corebank.timedinterface.Timed)")
+    @Around("@annotation(com.example.bankingapp.timedinterface.Timed)")
     public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
 
-        Object proceed = joinPoint.proceed();
+        Object proceed = joinPoint.proceed(); // Proceed with method execution
 
         long executionTime = System.currentTimeMillis() - start;
 
@@ -22,5 +22,3 @@ public class TimingAspect {
         return proceed;
     }
 }
-
-

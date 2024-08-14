@@ -172,14 +172,23 @@ public class UserService {
         responseUserDTO.setLastName(user.getLastName());
         return responseUserDTO;
     }
-    public JwtTokenResponse generateToken(JwtTokenDTO jwtTokenDTO ) {
-        Optional<User> findBy = userRepository.findByEmail(jwtTokenDTO.getEmail());
-        if(findBy.isPresent() && findBy.get().getRole().equals(jwtTokenDTO.getRole()) ){
-
-            String token = jwtService.generateToken(jwtTokenDTO);
-            return JwtTokenResponse.builder().accessToken(token).build();
-        }
-        throw new InvalidJwtToken("Invalid Credentials");
+    public JwtTokenResponse createJwtToken(JwtTokenDTO jwtTokenDTO ) {
+        String jwt = jwtService.generateToken(jwtTokenDTO);
+        return JwtTokenResponse.builder().accessToken(jwt).build();
+//        Optional<User> findBy = userRepository.findByEmail(jwtTokenDTO.getEmail());
+//        if(!findBy.get().getEmail().equals(jwtTokenDTO.getEmail())){
+//            throw new InvalidJwtToken("Email does not match ");
+//        }
+//        else if(!findBy.get().getRole().equals(jwtTokenDTO.getRole())){
+//            throw new InvalidJwtToken("Role does not Match");
+//        } else if (!findBy.get().getPassword().equals(jwtTokenDTO.getPassword())) {
+//            throw new InvalidJwtToken("Password does Not Match");
+//        } else if (findBy.isPresent() && findBy.get().getRole().equals(jwtTokenDTO.getRole())) {
+//
+//            String token = jwtService.generateToken(jwtTokenDTO);
+//            return JwtTokenResponse.builder().accessToken(token).build();
+//        }
+//        return null;
 
     }
 
