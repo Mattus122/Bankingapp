@@ -20,7 +20,7 @@ public class AccountDTO {
 
     @NotNull(message = "Balance cannot be null")
     @PositiveOrZero(message = "Balance cannot be negative")
-    private BigDecimal balance;
+    private int balance;
 
     private String currency;
     private AccountStatus accountStatus;

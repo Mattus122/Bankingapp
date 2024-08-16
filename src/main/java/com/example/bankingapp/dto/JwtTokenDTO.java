@@ -14,5 +14,4 @@ public class JwtTokenDTO {
     private String email;
     private String password;
 
-
 }

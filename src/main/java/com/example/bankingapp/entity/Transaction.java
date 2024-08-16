@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -27,6 +28,10 @@ public class Transaction {
     @Column(name = "transaction_id" )
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID transactionId;
+    @Column
+    private String transactionMessage;
+    @Column
+    private int transactionAmount;
     @Column(name = "transaction_type")
     @Enumerated(EnumType.STRING)
     private TransactionType  transactionType;

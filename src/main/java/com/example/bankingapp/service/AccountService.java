@@ -2,8 +2,10 @@ package com.example.bankingapp.service;
 
 import com.example.bankingapp.dto.AccountDTO;
 import com.example.bankingapp.entity.Account;
+import com.example.bankingapp.entity.Role;
 import com.example.bankingapp.entity.User;
-import com.example.bankingapp.exception.accountexception.AccountNotFound;
+import com.example.bankingapp.exception.accountexception.AccounrCreationException;
+import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
 import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
 import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
 import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
@@ -35,8 +37,12 @@ public class AccountService {
         validationService.validateToken(token , "POST");
         Optional<User> findbyid = userRepository.findById(userId);
         User user = null;
-        if (findbyid.isPresent()) {
+        if (findbyid.isPresent()&& !findbyid.get().getRole().equals(Role.ADMIN)) {
             user = findbyid.get();
+        }
+        else {
+            throw new AccounrCreationException("Admin Cannot create an account for himself");
+
         }
         if (findbyid.isPresent()) {
             Account acc = Account.builder().name(accountDTO.getName())
@@ -109,7 +115,7 @@ public class AccountService {
             Optional<Account> accountOptional = accountRepository.findById(accountId);
 
             if (!accountOptional.isPresent()) {
-                throw new AccountNotFound("Account not found with id: " + accountId);
+                throw new NoAccountFoundException("Account not found with id: " + accountId);
             }
 
             Account account = accountOptional.get();
@@ -131,19 +137,22 @@ public class AccountService {
 
         // Validate the token and check permissions
         validationService.validateToken(token, "DELETE");
+            if (accountRepository.existsById(accountId)) {
+                accountRepository.deleteById(accountId);
+            } else {
+                throw new NoAccountFoundException("Accounnt not found with id: " + accountId);
+            }
+
 
         // Find the account by ID
-        Optional<Account> findAccount = accountRepository.findById(accountId);
-        if (findAccount.isPresent()){
-            log.info(findAccount.get().getAccountId().toString());
-            accountRepository.delete(findAccount.get());
-        }
-
-
-
-        else {
-            throw new AccountNotFound("Account not found for ID " + accountId);
-        }
+//        Optional<Account> findAccount = accountRepository.findById(accountId);
+//        if (findAccount.isPresent()){
+//            log.info(findAccount.get().getAccountId().toString());
+//            accountRepository.delete(findAccount.get());
+//        }
+//        else {
+//            throw new AccountNotFound("Account not found for ID " + accountId);
+//        }
 
     }
 

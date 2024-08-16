@@ -137,6 +137,7 @@ public class UserService {
         }
 
     }
+    @Timed
     public ResponseUserDTO findUserById(UUID userId , String token) {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
@@ -163,6 +164,7 @@ public class UserService {
         return null;
 
     }
+    @Timed
     private ResponseUserDTO convertToDTO(User user) {
         ResponseUserDTO responseUserDTO = new ResponseUserDTO();
         responseUserDTO.setId(user.getId());
@@ -172,6 +174,7 @@ public class UserService {
         responseUserDTO.setLastName(user.getLastName());
         return responseUserDTO;
     }
+    @Timed
     public JwtTokenResponse createJwtToken(JwtTokenDTO jwtTokenDTO ) {
         String jwt = jwtService.generateToken(jwtTokenDTO);
         return JwtTokenResponse.builder().accessToken(jwt).build();

@@ -1,8 +1,7 @@
 package com.example.bankingapp.controller;
 
+import com.example.bankingapp.dto.ResponseTransactionDTO;
 import com.example.bankingapp.dto.TransactionDTO;
-import com.example.bankingapp.entity.Transaction;
-import com.example.bankingapp.entity.TransactionStatus;
 import com.example.bankingapp.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,35 +30,35 @@ public class TransactionController {
             description = "Create a Transaction for a given Account ID. The response is a TransactionDTO."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Transaction created successfully", content = { @Content(schema = @Schema(implementation = TransactionDTO.class), mediaType = "application/json") }),
+            @ApiResponse(responseCode = "201", description = "Transaction created successfully", content = { @Content(schema = @Schema(implementation = ResponseTransactionDTO.class), mediaType = "application/json") }),
             @ApiResponse(responseCode = "404", description = "Account not found", content = { @Content(schema = @Schema()) }),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
     @PostMapping("user/account/{accountId}/transactions")
-    public ResponseEntity<TransactionDTO> createTransaction(@PathVariable UUID accountId, @RequestBody @Valid TransactionDTO transactionDTO , @RequestHeader("Authorization") String token ) throws AccountNotFoundException {
-        TransactionDTO createdTransactionDTO = transactionService.createTransaction(accountId, transactionDTO , token);
-        return new ResponseEntity<>(createdTransactionDTO , HttpStatus.CREATED);
+    public ResponseEntity<ResponseTransactionDTO> createTransaction(@PathVariable UUID accountId, @Valid @RequestBody TransactionDTO transactionDTO, @RequestHeader("Authorization") String token ) throws AccountNotFoundException {
+        ResponseTransactionDTO createdResponseTransactionDTO = transactionService.createTransaction(accountId, transactionDTO , token);
+        return new ResponseEntity<>(createdResponseTransactionDTO, HttpStatus.CREATED);
     }
     @Operation(
             summary = "Get All Transactions",
             description = "Retrieve a list of all transactions. The response is a list of TransactionDTO."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Transactions retrieved successfully", content = { @Content(schema = @Schema(implementation = TransactionDTO.class), mediaType = "application/json") }),
+            @ApiResponse(responseCode = "200", description = "Transactions retrieved successfully", content = { @Content(schema = @Schema(implementation = ResponseTransactionDTO.class), mediaType = "application/json") }),
             @ApiResponse(responseCode = "204", description = "No transactions found", content = { @Content(schema = @Schema()) }),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = { @Content(schema = @Schema()) })
     })
     @GetMapping("/transactions")
-    ResponseEntity<List<TransactionDTO>> getAllTransactions(@RequestHeader("Authorization") String token){
-        List<TransactionDTO> allTransactions = transactionService.getAllTransactions(token);
+    ResponseEntity<List<ResponseTransactionDTO>> getAllTransactions(@RequestHeader("Authorization") String token){
+        List<ResponseTransactionDTO> allTransactions = transactionService.getAllTransactions(token);
         if(allTransactions.isEmpty()){
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(allTransactions , HttpStatus.OK);
     }
     @GetMapping("user/{userId}/account/transactions")
-    public ResponseEntity<List<TransactionDTO>> getTransactionsByUserId(@PathVariable UUID userId , @RequestHeader("Authorization") String token ) {
-        List<TransactionDTO> transactions = transactionService.getTransactionsByUserId(userId , token);
+    public ResponseEntity<List<ResponseTransactionDTO>> getTransactionsByUserId(@PathVariable UUID userId , @RequestHeader("Authorization") String token ) {
+        List<ResponseTransactionDTO> transactions = transactionService.getTransactionsByUserId(userId , token);
         if (transactions.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }

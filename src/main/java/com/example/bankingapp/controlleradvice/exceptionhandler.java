@@ -2,7 +2,8 @@ package com.example.bankingapp.controlleradvice;
 
 import com.example.bankingapp.dto.ErrorObject;
 import com.example.bankingapp.dto.ErrorObjectForValidations;
-import com.example.bankingapp.exception.accountexception.AccountNotFound;
+import com.example.bankingapp.exception.accountexception.AccounrCreationException;
+import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
 import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
 import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
 import com.example.bankingapp.exception.userexception.UserAlreadyExistsException;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,9 +37,9 @@ public class exceptionhandler {
         return new ResponseEntity<>(er , HttpStatus.CONFLICT);
     }
     @ExceptionHandler
-    public ResponseEntity<ErrorObject> Exception4(AccountNotFound e){
-        ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.NO_CONTENT.value()).timestamp(System.currentTimeMillis()).build();
-        return new ResponseEntity<>(er , HttpStatus.NO_CONTENT);
+    public ResponseEntity<ErrorObject> Exception4(NoAccountFoundException e){
+        ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.BAD_REQUEST.value()).timestamp(System.currentTimeMillis()).build();
+        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler
     public ResponseEntity<ErrorObject> Excetion(InvalidJwtToken e){
@@ -64,5 +66,11 @@ public class exceptionhandler {
 
         ErrorObjectForValidations errorObjectForValidations = new ErrorObjectForValidations("Validation Failed", errors);
         return ResponseEntity.badRequest().body(errorObjectForValidations);
+    }
+    @ExceptionHandler()
+    public ResponseEntity<ErrorObject> handle(AccounrCreationException e){
+        ErrorObject er = ErrorObject.builder()
+                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.FORBIDDEN.value()).build();
+        return new ResponseEntity<>(er , HttpStatus.FORBIDDEN);
     }
 }
