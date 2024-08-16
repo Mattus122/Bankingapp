@@ -1,24 +1,22 @@
 package com.example.bankingapp.dto;
 
-import com.example.bankingapp.entity.Transaction;
-import com.example.bankingapp.entity.TransactionStatus;
 import com.example.bankingapp.entity.TransactionType;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
 @Data
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TransactionDTO {
-
-    private UUID transactionId;
+    @NotNull(message = "Transaction amount  cannot be null")
+    @PositiveOrZero(message = "Balance cannot be negative")
+    private int transactionAmount;
+    @NotNull(message = "Transaction Type  cannot be null")
     private TransactionType transactionType;
-    private TransactionStatus transactionStatus;
+
 }
