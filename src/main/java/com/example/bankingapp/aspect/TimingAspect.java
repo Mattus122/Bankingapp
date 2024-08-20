@@ -13,7 +13,7 @@ public class TimingAspect {
     public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
 
-        Object proceed = joinPoint.proceed(); // Proceed with method execution
+        Object proceed = joinPoint.proceed();
 
         long executionTime = System.currentTimeMillis() - start;
 

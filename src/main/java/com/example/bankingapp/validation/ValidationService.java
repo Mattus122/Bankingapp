@@ -1,5 +1,4 @@
 package com.example.bankingapp.validation;
-import com.example.bankingapp.entity.Role;
 import com.example.bankingapp.entity.User;
 import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
 import com.example.bankingapp.repository.UserRepository;
@@ -12,10 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.security.Key;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
-import java.util.function.Function;
 
 
 @Slf4j
@@ -33,16 +30,13 @@ public class ValidationService {
                 .getBody();
     }
     private Key getSigninKey() {
-        // Use the same key as in JwtService
         byte[] keyBytes = Decoders.BASE64.decode("c2VjcmV0S2V5RXhhbXBsZTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl");
         return Keys.hmacShaKeyFor(keyBytes);
     }
     public String getEmailFromToken(String token) {
         return extractAllClaims(token).get("email", String.class);
     }
-    public String getPasswordFromToken(String token){
-        return extractAllClaims(token).get("password", String.class);
-    }
+    public String getPasswordFromToken(String token){return extractAllClaims(token).get("password", String.class);}
     public String getSubjectFromToken(String token) {
         return extractAllClaims(token).getSubject();
     }
@@ -50,28 +44,6 @@ public class ValidationService {
         return getSubjectFromToken(token);
     }
 
-//    public <T> T extractClaims(String token, Function<Claims, T> claimsResolver) {
-//        final Claims claims = extractAllClaims(token);//we are using this to get a particular Claim
-//        return claimsResolver.apply(claims);
-//    }
-
-
-//    public boolean validateRole(String token, String requestType) {
-//        String HARDCODED_TOKEN = token;
-//        // Hardcoded token comparison
-//        if (!token.equals(HARDCODED_TOKEN)) {
-//            throw new ForbiddenRequestException("Invalid Token");
-//        }
-//
-//        Claims claims = extractAllClaims(token);
-//        String role = claims.getSubject();// Ensure "role" is a custom claim in your JWT
-//
-//        if ("ADMIN".equals(role) && ("POST".equals(requestType) || "PUT".equals(requestType) || "DELETE".equals(requestType))) {
-//            return true;
-//        } else {
-//            throw new ForbiddenRequestException("Role does not match required permissions");
-//        }
-//    }
 
 
     public boolean isTokenExpired(String token) {
@@ -81,24 +53,19 @@ public class ValidationService {
 
     }
     public boolean validateToken(String token , String requestType) {
-        final String HARDCODED_TOKEN =token; // Use your actual hardcoded token
+        final String HARDCODED_TOKEN =token;
 
         // Token comparison
         if (!token.equals(HARDCODED_TOKEN)) {
             throw new ForbiddenRequestException("Invalid Token");
         }
 
-        String email = getEmailFromToken(HARDCODED_TOKEN); // Ensure this method extracts email from the token
+        String email = getEmailFromToken(HARDCODED_TOKEN);
 
-        // Check if the user exists in the database
-        //think if you need to add this check bcz the token cannot be generated if the user credentials are bad.
         Optional<User> userOptional = userRepository.findByEmail(email);
         log.info(userOptional.get().getEmail());
         log.info(userOptional.get().getRole().toString());
-        if (!userOptional.isPresent()) {
-            throw new ForbiddenRequestException("User not found with email: " + email);
-        }
-        else if("ADMIN".equals(userOptional.get().getRole().toString())) {
+        if("ADMIN".equals(userOptional.get().getRole().toString())) {
             return true;
         } else if (userOptional.get().getRole().toString().equals("USER") && requestType.equals("GET")) {
             return true;

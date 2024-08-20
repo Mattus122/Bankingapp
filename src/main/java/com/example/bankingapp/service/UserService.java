@@ -51,8 +51,6 @@ public class UserService {
 
         }
         return null;
-        //extract this from jwt and check in the validation service itself , try to minimize no. of DB calls if possible  , if the code doesnot work just retain the old code and make it working proper . thanks
-
     }
 
     @Timed
@@ -69,7 +67,6 @@ public class UserService {
             List<ResponseUserDTO> responseUserDTOList = new ArrayList<>();
             String email = validationService.getEmailFromToken(token);
             Optional<User> user= userRepository.findByEmail(email);
-            // no need for checking if user is present in Db bcz token wont be created untill user already exists in db.
             ResponseUserDTO responseUserDTO = convertToDTO(user.get());
             responseUserDTOList.add(responseUserDTO);
             return responseUserDTOList;
@@ -101,28 +98,6 @@ public class UserService {
 
 
     }
-//
-//    public UserDTO update(User newUserData, UUID userId) {
-//        Optional<User> oldUserData = userRepository.findById(userId);
-//
-//            if(oldUserData.isPresent()){
-//                User updateuser = oldUserData.get();
-//                updateuser.setFirstName(newUserData.getFirstName());
-//                updateuser.setLastName(newUserData.getLastName());
-//                updateuser.setEmail(newUserData.getEmail());
-//                updateuser.setDob(newUserData.getDob());
-//                userRepository.save(updateuser);
-//                UserDTO u = convertToDTO(updateuser);
-//                return new ResponseEntity<>(u  , HttpStatus.OK);
-//
-//            }
-//            else {
-//                throw new UserNotFoundExcetion("Cannot Find user at given UUID" + userId);
-//            }
-//
-//
-//
-//    }
     @Timed
     public void deleteUserById(UUID userId , String token  , String requestType) {
         if (token.startsWith("Bearer ")) {
@@ -178,23 +153,5 @@ public class UserService {
     public JwtTokenResponse createJwtToken(JwtTokenDTO jwtTokenDTO ) {
         String jwt = jwtService.generateToken(jwtTokenDTO);
         return JwtTokenResponse.builder().accessToken(jwt).build();
-//        Optional<User> findBy = userRepository.findByEmail(jwtTokenDTO.getEmail());
-//        if(!findBy.get().getEmail().equals(jwtTokenDTO.getEmail())){
-//            throw new InvalidJwtToken("Email does not match ");
-//        }
-//        else if(!findBy.get().getRole().equals(jwtTokenDTO.getRole())){
-//            throw new InvalidJwtToken("Role does not Match");
-//        } else if (!findBy.get().getPassword().equals(jwtTokenDTO.getPassword())) {
-//            throw new InvalidJwtToken("Password does Not Match");
-//        } else if (findBy.isPresent() && findBy.get().getRole().equals(jwtTokenDTO.getRole())) {
-//
-//            String token = jwtService.generateToken(jwtTokenDTO);
-//            return JwtTokenResponse.builder().accessToken(token).build();
-//        }
-//        return null;
-
     }
-
-
-
 }

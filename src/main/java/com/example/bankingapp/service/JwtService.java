@@ -3,7 +3,6 @@ package com.example.bankingapp.service;
 import com.example.bankingapp.dto.JwtTokenDTO;
 import com.example.bankingapp.entity.User;
 import com.example.bankingapp.exception.userexception.UnauthorizedAccessException;
-import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
 import com.example.bankingapp.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.Optional;
-import java.util.function.Function;
 
 
 @Service

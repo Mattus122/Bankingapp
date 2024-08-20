@@ -135,7 +135,6 @@ public class AccountService {
             token = token.substring(7);
         }
 
-        // Validate the token and check permissions
         validationService.validateToken(token, "DELETE");
             if (accountRepository.existsById(accountId)) {
                 accountRepository.deleteById(accountId);
@@ -144,110 +143,5 @@ public class AccountService {
             }
 
 
-        // Find the account by ID
-//        Optional<Account> findAccount = accountRepository.findById(accountId);
-//        if (findAccount.isPresent()){
-//            log.info(findAccount.get().getAccountId().toString());
-//            accountRepository.delete(findAccount.get());
-//        }
-//        else {
-//            throw new AccountNotFound("Account not found for ID " + accountId);
-//        }
-
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    public List<AccountDto> accountInformation(UUID userId) throws Exception {
-//        List<Account> accountsList = new ArrayList<>();
-//////        userRepository.findAll().forEach(user -> {
-//////            if (user.getId().equals(userId)) {
-//////                accountsList.add(userRepository.fi);
-//////            }
-//////        });
-//        Optional<User> userOptional = userRepository.findById(userId);
-//        if (userOptional.isPresent()) {
-//            List<Account> accounts = accountRepository.findByUserId(userId);
-//            return accounts.stream()
-//                    .map(this::convertEntityTOAccountDto)
-//                    .collect(Collectors.toList());
-//        } else throw new AccountNotFoundException("NO Account present with user id" + userId);
-//
-//        //working code incase off returning List<Accounts>>
-////        Optional<User> userOptional = userRepository.findById(userId);
-////        if (userOptional.isPresent()) {
-////            List<Account> accounts =userOptional.get().getAccounts();
-////            return accounts.stream()
-////                    .map(account -> {
-////                        AccountDto accountDto = new AccountDto();
-////                        accountDto.setName(account.getName());
-////                        accountDto.setAccountStatus(account.getAccountStatus());
-////                        accountDto.setBalance(account.getBalance());
-////                        accountDto.setCurrency(account.getCurrency());
-////                        return accountDto;
-////                    })
-////                    .collect(Collectors.toList());
-////        } else {
-////            return null;
-////        }
-//    }

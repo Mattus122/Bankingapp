@@ -14,9 +14,6 @@ public class ErrorObjectForValidations {
     private String message;
     private List<String> errordetails;
 
-//    public ErrorObjectForValidations(String message, List<String> details) {
-//        this.message = message;
-//        this.details = details;
-//    }
+
 
 }

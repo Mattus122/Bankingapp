@@ -4,7 +4,6 @@ import com.example.bankingapp.entity.AccountStatus;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 @Data
 @AllArgsConstructor

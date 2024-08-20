@@ -27,21 +27,6 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final ValidationService validationService;
     private final AccountRepository accountRepository;
-//    public ResponseEntity<Transaction> createTransaction( UUID accountId , Transaction transaction) {
-//        Optional<Account> findById = accountsRepository.findById(accountId);
-//        Account account = null;
-//        if(findById.isPresent()){
-//            account = findById.get();
-//            Transaction tan  = Transaction.builder().transactionType(transaction.getTransactionType()).account(account).
-//                    transactionStatus(transaction.getTransactionStatus()) .build();
-//            Transaction tra = transactionRepository.save(tan);
-//            return new ResponseEntity<>(tra, HttpStatus.CREATED);
-//        }
-//        else{
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//        }
-//
-//    }
     public ResponseTransactionDTO createTransaction(UUID accountId, TransactionDTO transactionDTO, String token)  {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
