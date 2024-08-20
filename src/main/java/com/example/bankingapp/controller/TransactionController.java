@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.security.auth.login.AccountNotFoundException;
@@ -63,6 +64,16 @@ public class TransactionController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(transactions, HttpStatus.OK);
+    }
+    @GetMapping("/user/account/{accountId}/transactions")
+    public ResponseEntity<List<ResponseTransactionDTO>> accountTransaction(@PathVariable UUID accountId , @RequestHeader("Authorization") String token) {
+        List<ResponseTransactionDTO> transactionDTOList = transactionService.getAccountTransaction(accountId , token);
+
+        if(transactionDTOList.isEmpty()){
+            return new ResponseEntity<>(transactionDTOList , HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(transactionDTOList , HttpStatus.OK);
+
     }
 
 }

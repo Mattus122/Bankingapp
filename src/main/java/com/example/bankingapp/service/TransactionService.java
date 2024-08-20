@@ -5,7 +5,7 @@ import com.example.bankingapp.dto.TransactionDTO;
 import com.example.bankingapp.entity.*;
 import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
 import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
-import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
+import com.example.bankingapp.exception.userexception.UnauthorizedAccessException;
 import com.example.bankingapp.repository.AccountRepository;
 import com.example.bankingapp.repository.TransactionRepository;
 import com.example.bankingapp.repository.UserRepository;
@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.login.AccountNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,17 +42,20 @@ public class TransactionService {
 //        }
 //
 //    }
-    public ResponseTransactionDTO createTransaction(UUID accountId, TransactionDTO transactionDTO, String token) throws AccountNotFoundException {
+    public ResponseTransactionDTO createTransaction(UUID accountId, TransactionDTO transactionDTO, String token)  {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
         if(validationService.returnRole(token).equals("ADMIN")){
             throw new ForbiddenRequestException("Cannot Create a Transaction ADMIN  does not have access for account creation of its own");
         }
-
+        if(!checkifSameUser(token ,accountId)){
+            throw new ForbiddenRequestException("Cannot create a transaction, No Account with id "+ accountId + " exsists for user  " +validationService.getEmailFromToken(token));
+        }
+        checkIfSameCurrency(token , transactionDTO.getCurrency());
         Optional<Account> findbyid = accountRepository.findById(accountId);
-        Account linkedaccount = null;
-        if (findbyid.isPresent() && transactionDTO.getTransactionType().toString().equals("DEBIT") && checkifSameUser(token , accountId )) {
+        Account linkedaccount;
+        if (findbyid.isPresent() && transactionDTO.getTransactionType().toString().equals("CREDIT") ) {
             int balance = transactionDTO.getTransactionAmount() + findbyid.get().getBalance();
             findbyid.get().setBalance(balance);
             linkedaccount = findbyid.get();
@@ -64,7 +66,7 @@ public class TransactionService {
             Transaction transact = transactionRepository.save(tr);
             return convertToTransactionDTO(transact);
         }
-        else if(transactionDTO.getTransactionType().toString().equals("CREDIT")&& checkifSameUser(token , accountId)){
+        else if(transactionDTO.getTransactionType().toString().equals("DEBIT")){
             linkedaccount = findbyid.get();
             if(findbyid.get().getBalance() > transactionDTO.getTransactionAmount()){
                 int balance = findbyid.get().getBalance() - transactionDTO.getTransactionAmount();
@@ -76,22 +78,33 @@ public class TransactionService {
                 Transaction transact = transactionRepository.save(tr);
                 return convertToTransactionDTO(transact);
             }
-            else{
-                linkedaccount = findbyid.get();
-                Transaction tr = Transaction.builder().transactionMessage( "Low account Balance ")
+            else if(findbyid.get().getBalance()<transactionDTO.getTransactionAmount()){
+                Transaction tr = Transaction.builder().transactionMessage("Amount " + transactionDTO.getTransactionAmount()+ " is not "+transactionDTO.getTransactionType() + " from " +accountId)
                         .transactionAmount(transactionDTO.getTransactionAmount()).transactionStatus(TransactionStatus.FAILED).transactionType(transactionDTO.getTransactionType())
                         .account(linkedaccount)
                         .build();
-                transactionRepository.save(tr);
-                return convertToTransactionDTO(tr);
+                Transaction transact = transactionRepository.save(tr);
+                return convertToTransactionDTO(transact);
             }
+            return null;
 
         }
         else {
             throw new NoAccountFoundException("No account Present for  id : "+accountId);
         }
     }
+    private boolean checkIfSameCurrency(String token , String currency){
+        String emailFromToken = validationService.getEmailFromToken(token);
+        Optional<User> userOptional = userRepository.findByEmail(emailFromToken);
+        List<Account> accountList= userOptional.get().getAccounts();
+        for(Account a : accountList){
+            if (a.getCurrency().equals(currency)){
+                return true;
+            }
 
+        }
+        throw new ForbiddenRequestException("Cannot process a transaction for the currency " +currency + " in this account ");
+    }
     private boolean checkifSameUser(String token, UUID accountId) {
         String emailFromToken = validationService.getEmailFromToken(token);
         Optional<User> userOptional = userRepository.findByEmail(emailFromToken);
@@ -100,8 +113,9 @@ public class TransactionService {
             if (a.getAccountId().equals(accountId)){
                 return true;
             }
+
         }
-        throw new ForbiddenRequestException("Cannot create a transaction, No Account with id "+ accountId + " exsists for user  " +emailFromToken);
+        return false;
 
     }
 
@@ -131,6 +145,7 @@ public class TransactionService {
         if(validationService.returnRole(token).equals("USER")){
             Optional<User> userOptional = userRepository.findByEmail(validationService.getEmailFromToken(token));
             UUID id = userOptional.get().getId();
+
             if(id.equals(userId)){
                 transactionList = transactionRepository.findAllByUserId(userId);
                 return transactionList.stream()
@@ -138,6 +153,7 @@ public class TransactionService {
                         .collect(Collectors.toList());
             }
             else{
+                // check if this is 401 or 403
                 throw new ForbiddenRequestException("Cannot Access Other Users Data ");
             }
         }
@@ -165,5 +181,19 @@ public class TransactionService {
 
 
 
+
+    public List<ResponseTransactionDTO> getAccountTransaction(UUID accountId, String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        if(!checkifSameUser(token , accountId)){
+            throw new ForbiddenRequestException("Cannot Access other Individuals Information");
+        }
+
+        List<Transaction> transactionList = transactionRepository.findByAccountId(accountId);
+        return transactionList.stream()
+                .map(this::convertToTransactionDTO)
+                .collect(Collectors.toList());
+    }
 }
 

@@ -17,6 +17,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @NamedQuery(
+        name = "Transaction.findByAccountId",
+        query = "SELECT t FROM Transaction t WHERE t.account.id = :accountId"
+)
+@NamedQuery(
         name = "Transaction.findAllByUserId",
         query = "SELECT t FROM Transaction t " +
                 "JOIN t.account a " +

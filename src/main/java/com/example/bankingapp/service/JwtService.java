@@ -2,6 +2,7 @@ package com.example.bankingapp.service;
 
 import com.example.bankingapp.dto.JwtTokenDTO;
 import com.example.bankingapp.entity.User;
+import com.example.bankingapp.exception.userexception.UnauthorizedAccessException;
 import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
 import com.example.bankingapp.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -37,7 +38,7 @@ public class JwtService {
                     .compact();
         }
         else{
-            throw new UserNotFoundExcetion("No User Found check the email and password");
+            throw new UnauthorizedAccessException("No User Found check the email and password");
         }
     }
 

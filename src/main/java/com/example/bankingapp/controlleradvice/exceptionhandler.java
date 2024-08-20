@@ -6,6 +6,7 @@ import com.example.bankingapp.exception.accountexception.AccounrCreationExceptio
 import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
 import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
 import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
+import com.example.bankingapp.exception.userexception.UnauthorizedAccessException;
 import com.example.bankingapp.exception.userexception.UserAlreadyExistsException;
 import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
 import org.springframework.http.HttpStatus;
@@ -70,7 +71,14 @@ public class exceptionhandler {
     @ExceptionHandler()
     public ResponseEntity<ErrorObject> handle(AccounrCreationException e){
         ErrorObject er = ErrorObject.builder()
-                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.FORBIDDEN.value()).build();
-        return new ResponseEntity<>(er , HttpStatus.FORBIDDEN);
+                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.BAD_REQUEST.value()).build();
+        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler()
+    public ResponseEntity<ErrorObject> handle(UnauthorizedAccessException e){
+        ErrorObject er = ErrorObject.builder()
+                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.UNAUTHORIZED.value()).build();
+        return new ResponseEntity<>(er , HttpStatus.UNAUTHORIZED);
+    }
+
 }

@@ -34,16 +34,15 @@ public class AccountService {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        validationService.validateToken(token , "POST");
+        if(validationService.returnRole(token).equals("USER")){
+            throw new ForbiddenRequestException("Access denied for desired operation");
+        }
         Optional<User> findbyid = userRepository.findById(userId);
-        User user = null;
-        if (findbyid.isPresent()&& !findbyid.get().getRole().equals(Role.ADMIN)) {
-            user = findbyid.get();
-        }
-        else {
+        User user ;
+        if (findbyid.get().getRole().equals(Role.ADMIN)) {
             throw new AccounrCreationException("Admin Cannot create an account for himself");
-
         }
+        user = findbyid.get();
         if (findbyid.isPresent()) {
             Account acc = Account.builder().name(accountDTO.getName())
                     .balance(accountDTO.getBalance()).
@@ -71,6 +70,7 @@ public class AccountService {
          List<AccountDTO> accountDTOList = new ArrayList<>();
         if(validationService.returnRole(token).equals("USER")){
             if(!userOptional.get().getId().equals(userId)){
+                // this is a 403 or 401
                 throw new ForbiddenRequestException("Cannot Access Other Users Account Information");
             }
             accountDTOList= getAccountListDTO(userId , email);
@@ -89,7 +89,7 @@ public class AccountService {
         if(userOptional.isPresent()){
             List<Account> accounts = accountRepository.findByUserId(userId);
             if(accounts.isEmpty()){
-                throw new AccountNotFoundException("No account exists for id" +userId);
+                throw new AccountNotFoundException("No account exists for id : " +userId);
             }
             return accounts.stream()
                     .map(this::convertEntityTOAccountDto)

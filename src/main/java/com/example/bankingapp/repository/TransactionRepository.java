@@ -12,6 +12,6 @@ import java.util.UUID;
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     @Query("SELECT t FROM Transaction t JOIN t.account a JOIN a.user u WHERE u.id = :userId")
     List<Transaction> findAllByUserId(@Param("userId") UUID userId);
-
-
+//    List<Transaction> findByAccountId(UUID accountId);
+    List<Transaction> findByAccountId(UUID accountId);
 }
