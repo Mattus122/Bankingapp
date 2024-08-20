@@ -20,7 +20,7 @@
 - 
 
 ## Steps To Run The Project 
--  git clone https://https://github.com/Mattus122/Bankingapp/tree/final-bankingapp
+-  git clone --branch final-bankingapp https://github.com/Mattus122/Bankingapp.git
 -  cd Bankingapp
 -  BUILD THE WAR FILE FOR APPLICATION :  ./mvwn clean package -DskipTests
 -  BUILD THE DOCKER IMAGGE FOR TOMCAT AND POSTGRES DB :  docker-compose build
