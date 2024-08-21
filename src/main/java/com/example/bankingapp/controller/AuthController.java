@@ -3,7 +3,6 @@ package com.example.bankingapp.controller;
 import com.example.bankingapp.dto.JwtTokenDTO;
 import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.service.AuthService;
-import com.example.bankingapp.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

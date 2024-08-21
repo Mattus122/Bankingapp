@@ -1,4 +1,4 @@
-package com.example.bankingapp.dto;
+package com.example.bankingapp.dto.exceptionbject;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
