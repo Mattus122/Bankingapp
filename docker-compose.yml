@@ -1,0 +1,20 @@
+version: '1'
+
+services:
+
+  ctomcat:
+    build:
+      context: .
+      dockerfile: ./docker/tomcat/Dockerfile
+    ports:
+      - "8080:8080"
+    image: itomcat-bankingapp
+
+
+  cpostgres:
+    build:
+      context: "./docker/postgres"
+    ports:
+      - "5432:5432"
+    restart: always
+    image: ipostgres-bankingapp
