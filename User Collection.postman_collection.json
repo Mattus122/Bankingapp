@@ -1,0 +1,127 @@
+{
+	"info": {
+		"_postman_id": "f47a0653-7281-47fa-b5ce-0d3868dedc19",
+		"name": "User Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34980846"
+	},
+	"item": [
+		{
+			"name": "GENERATETOKEN",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http:://DOMAIN/users",
+					"protocol": "http:",
+					"host": [
+						"DOMAIN"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CREATE USER",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http:://DOMAIN/users",
+					"protocol": "http:",
+					"host": [
+						"DOMAIN"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET ALL USER(ADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http:://DOMAIN/users/id",
+					"protocol": "http:",
+					"host": [
+						"DOMAIN"
+					],
+					"path": [
+						"users",
+						"id"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET USER BY ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http:://DOMAIN/users/id",
+					"protocol": "http:",
+					"host": [
+						"DOMAIN"
+					],
+					"path": [
+						"users",
+						"id"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UPDATE USER",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/bankingapp-0.0.1-SNAPSHOT/v1/user",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"bankingapp-0.0.1-SNAPSHOT",
+						"v1",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE USER",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/bankingapp-0.0.1-SNAPSHOT/v1/user/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"bankingapp-0.0.1-SNAPSHOT",
+						"v1",
+						"user",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
