@@ -17,8 +17,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/v1")
-@RequiredArgsConstructor
+
 @Tag(name = "Account" , description = "Account Management Api ")
+@RequiredArgsConstructor
 public class AccountController {
     Logger logger = LoggerFactory.getLogger(AccountController.class);
     private final AccountService accountService;

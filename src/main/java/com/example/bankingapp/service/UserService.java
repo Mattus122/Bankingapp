@@ -149,9 +149,7 @@ public class UserService {
         responseUserDTO.setLastName(user.getLastName());
         return responseUserDTO;
     }
-    @Timed
-    public JwtTokenResponse createJwtToken(JwtTokenDTO jwtTokenDTO ) {
-        String jwt = jwtService.generateToken(jwtTokenDTO);
-        return JwtTokenResponse.builder().accessToken(jwt).build();
-    }
+
+
+
 }

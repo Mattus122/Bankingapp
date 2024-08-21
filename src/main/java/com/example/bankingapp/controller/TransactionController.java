@@ -16,7 +16,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1")
 @RequiredArgsConstructor
-@Tag(name = "Transaction" , description = "Transaction  Management Api ")
+
+@Tag(name = "Transaction " , description = "Transaction Management Api ")
 public class TransactionController {
     private  final TransactionService transactionService;
 

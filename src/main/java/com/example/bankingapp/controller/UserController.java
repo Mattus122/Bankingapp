@@ -5,6 +5,7 @@ import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.dto.ResponseUserDTO;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.service.UserService;
+import jakarta.persistence.TableGenerator;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,17 +23,13 @@ import java.util.UUID;
 public class UserController {
     private final UserService userService;
     @PostMapping("/user")
-    public ResponseEntity<ResponseUserDTO> createUser(@RequestBody @Valid UserDTO userDTO, @RequestHeader("Authorization") String token ) throws Exception {
+    public ResponseEntity<ResponseUserDTO> adduser (@RequestBody @Valid UserDTO userDTO, @RequestHeader("Authorization") String token ) throws Exception {
         ResponseUserDTO createdUser  = userService.add(userDTO, token , "POST");
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
-    @PostMapping("/user/generateToken")
-    public ResponseEntity<JwtTokenResponse> generateJwtToken(@RequestBody JwtTokenDTO jwtTokenDTO){
-        JwtTokenResponse jwtTokenResponse = userService.createJwtToken(jwtTokenDTO );
-        return new ResponseEntity<>(jwtTokenResponse, HttpStatus.OK);
-    }
+
     @GetMapping("/user")
-    public ResponseEntity<List<ResponseUserDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<ResponseUserDTO>> allusers (@RequestHeader("Authorization") String token) {
         List<ResponseUserDTO> responseUserDTOList = userService.returnAllUser(token);
         if (responseUserDTOList.isEmpty()) {
             return new ResponseEntity<>(responseUserDTOList, HttpStatus.NO_CONTENT);
@@ -40,12 +37,12 @@ public class UserController {
         return new ResponseEntity<>(responseUserDTOList, HttpStatus.OK);
     }
     @GetMapping ("/user/{userId}")
-    ResponseEntity<ResponseUserDTO> findUserById(@PathVariable UUID userId , @RequestHeader("Authorization") String token){
+    ResponseEntity<ResponseUserDTO> userById(@PathVariable UUID userId , @RequestHeader("Authorization") String token){
         ResponseUserDTO user = userService.findUserById(userId , token);
         return new ResponseEntity<>(user , HttpStatus.FOUND);
     }
     @PutMapping("/user/{userId}")
-    public ResponseEntity<ResponseUserDTO> updateUser(@RequestBody @Valid UserDTO userDTO , @PathVariable UUID userId , @RequestHeader("Authorization") String token) {
+    public ResponseEntity<ResponseUserDTO> updateuser (@RequestBody @Valid UserDTO userDTO , @PathVariable UUID userId , @RequestHeader("Authorization") String token) {
         ResponseUserDTO updatedUser = userService.updateUser(userId, userDTO , token ,"PUT");
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
