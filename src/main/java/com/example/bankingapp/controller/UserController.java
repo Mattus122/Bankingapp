@@ -1,11 +1,8 @@
 package com.example.bankingapp.controller;
 
-import com.example.bankingapp.dto.JwtTokenDTO;
-import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.dto.ResponseUserDTO;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.service.UserService;
-import jakarta.persistence.TableGenerator;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

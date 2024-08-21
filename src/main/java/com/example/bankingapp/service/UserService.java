@@ -1,8 +1,6 @@
 package com.example.bankingapp.service;
 
 import com.example.bankingapp.controller.UserController;
-import com.example.bankingapp.dto.JwtTokenDTO;
-import com.example.bankingapp.dto.JwtTokenResponse;
 import com.example.bankingapp.dto.ResponseUserDTO;
 import com.example.bankingapp.dto.UserDTO;
 import com.example.bankingapp.entity.User;

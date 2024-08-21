@@ -1,7 +1,7 @@
 package com.example.bankingapp.controlleradvice;
 
-import com.example.bankingapp.dto.ErrorObject;
-import com.example.bankingapp.dto.ErrorObjectForValidations;
+import com.example.bankingapp.dto.exceptionbject.ErrorObject;
+import com.example.bankingapp.dto.exceptionbject.ErrorObjectForValidations;
 import com.example.bankingapp.exception.accountexception.AccounrCreationException;
 import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
 import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
