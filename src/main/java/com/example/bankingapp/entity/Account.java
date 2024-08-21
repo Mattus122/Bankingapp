@@ -27,19 +27,17 @@ public class Account {
     private String name;
 
     @Column(name = "account_balance")
-    private BigDecimal balance;
+    private int balance;
     @Column(name = "account_currency")
     private String currency;
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus;
 
-    @ManyToOne//fetch type is eager by default
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)//fetch type is eager by default
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
-//    @OneToOne
-//    @JoinColumn(name = "user_id") with the help of this we can name our foreign key and gives info regarding column we are joining.
     private User user;
     @JsonIgnore
-    @OneToMany(mappedBy = "account", fetch = FetchType.EAGER , cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "account",cascade = CascadeType.ALL, fetch = FetchType.EAGER , orphanRemoval = true)
     private List<Transaction> transaction;
 }

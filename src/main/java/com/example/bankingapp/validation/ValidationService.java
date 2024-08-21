@@ -1,97 +1,81 @@
 package com.example.bankingapp.validation;
-
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.bankingapp.entity.User;
-import com.example.bankingapp.exception.InvalidJwtToken;
+import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
 import com.example.bankingapp.repository.UserRepository;
 import com.example.bankingapp.service.JwtService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
 
+
 @Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
 public class ValidationService {
+
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    public class JwtDecoder {
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigninKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+    private Key getSigninKey() {
+        byte[] keyBytes = Decoders.BASE64.decode("c2VjcmV0S2V5RXhhbXBsZTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl");
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+    public String getEmailFromToken(String token) {
+        return extractAllClaims(token).get("email", String.class);
+    }
+    public String getPasswordFromToken(String token){return extractAllClaims(token).get("password", String.class);}
+    public String getSubjectFromToken(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+    public String returnRole(String token){
+        return getSubjectFromToken(token);
+    }
 
-        private static final String secretKEY = "c2VjcmV0S2V5RXhhbXBsZTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl";
 
-        private Key getSigninKey() {
-            byte[] keyBytes = Decoders.BASE64.decode(secretKEY);
-            return Keys.hmacShaKeyFor(keyBytes);
-        }
 
-        public Claims decodeJWT(String jwt) {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getSigninKey())
-                    .build()
-                    .parseClaimsJws(jwt)
-                    .getBody();
-        }
+    public boolean isTokenExpired(String token) {
+                Claims claims = extractAllClaims(token);
+                Date expiration = claims.getExpiration();
+                return expiration.before(new Date());
 
     }
-    public boolean validateToken(String token){
-        JwtDecoder jwtDecoder = new JwtDecoder();
-        Claims claims = jwtDecoder.decodeJWT(token);
-        String subject = claims.getSubject();
-        Optional<User> findUser = userRepository.findByEmail(subject);
-        if (findUser.isPresent()){
+    public boolean validateToken(String token , String requestType) {
+        final String HARDCODED_TOKEN =token;
+
+        // Token comparison
+        if (!token.equals(HARDCODED_TOKEN)) {
+            throw new ForbiddenRequestException("Invalid Token");
+        }
+
+        String email = getEmailFromToken(HARDCODED_TOKEN);
+
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        log.info(userOptional.get().getEmail());
+        log.info(userOptional.get().getRole().toString());
+        if("ADMIN".equals(userOptional.get().getRole().toString())) {
+            return true;
+        } else if (userOptional.get().getRole().toString().equals("USER") && requestType.equals("GET")) {
             return true;
         }
-        else {
-            throw new InvalidJwtToken("ERROR RESOURCE NOT FOUND");
+        else{
+            throw new ForbiddenRequestException("Role Does not Have the required Access");
         }
 
     }
-//
-//
-//
-////    public boolean validateToken(String token) {
-////        JwtDecoder decoder = new JwtDecoder();
-////        Claims claims = decoder.decodeJWT(token);
-////        String subject = claims.getSubject();
-////        return user.getEmail().equals(subject);
-////
-////        final String email = jwtService.getEmailFromToken(token);
-////        return (email.equals(user.getEmail()) && !jwtService.isTokenExpired(token));
-////        DecodedJWT decodedJWT = JWT.decode(token);
-////        Date expiresAt = decodedJWT.getExpiresAt();
-////        Claims claims = decoder.decodeJWT(token);
-////    }
-    //this part i was checking for expiration of jwt token plz check and suggest if any changes are to be made . 
-//
-//        public boolean validateToken(String token) {
-//
-//
-//        DecodedJWT decodedJWT;
-//        try {
-//            decodedJWT = JWT.decode(token);
-//
-//        } catch (JWTDecodeException e) {
-//            throw new JWTDecodeException("Unable to Decode the required Jwt token");
-//        }
-//        Date expiresAt = decodedJWT.getExpiresAt();
-//
-//        return expiresAt.before(new Date());
-//
-//    }
+
 
 }
+

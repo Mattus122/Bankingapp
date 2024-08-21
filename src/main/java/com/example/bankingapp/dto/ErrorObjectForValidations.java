@@ -4,13 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorObject {
-
-    private int status;
+public class ErrorObjectForValidations {
     private String message;
-    private Long timestamp;
+    private List<String> errordetails;
+
+
+
 }

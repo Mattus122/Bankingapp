@@ -1,20 +1,28 @@
 package com.example.bankingapp.dto;
 
 import com.example.bankingapp.entity.AccountStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
-import java.math.BigDecimal;
-
+import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class AccountDTO {
+
+    private UUID accountId;
+
+
+    @NotBlank(message = "Account name cannot be empty or null")
     private String name;
-    private BigDecimal balance;
+
+    @NotNull(message = "Balance cannot be null")
+    @PositiveOrZero(message = "Balance cannot be negative")
+    private int balance;
+
     private String currency;
     private AccountStatus accountStatus;
+
+
 }

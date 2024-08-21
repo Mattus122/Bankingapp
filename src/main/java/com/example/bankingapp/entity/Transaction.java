@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -15,20 +16,35 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@NamedQuery(
+        name = "Transaction.findByAccountId",
+        query = "SELECT t FROM Transaction t WHERE t.account.id = :accountId"
+)
+@NamedQuery(
+        name = "Transaction.findAllByUserId",
+        query = "SELECT t FROM Transaction t " +
+                "JOIN t.account a " +
+                "JOIN a.user u " +
+                "WHERE u.id = :userId"
+)
 public class Transaction {
     @Id
     @Column(name = "transaction_id" )
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID transactionId;
+    @Column
+    private String transactionMessage;
+    @Column
+    private int transactionAmount;
     @Column(name = "transaction_type")
     @Enumerated(EnumType.STRING)
     private TransactionType  transactionType;
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_status")
     private TransactionStatus transactionStatus;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
-    @JoinColumn(name = "account_id")
+    @JoinColumn(name = "account_id" , nullable = false)
     private Account account;
 
 }

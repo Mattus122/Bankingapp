@@ -1,14 +1,23 @@
 package com.example.bankingapp.controlleradvice;
 
 import com.example.bankingapp.dto.ErrorObject;
-import com.example.bankingapp.exception.AccountNotFound;
-import com.example.bankingapp.exception.InvalidJwtToken;
-import com.example.bankingapp.exception.UserAlreadyExistsException;
-import com.example.bankingapp.exception.UserNotFoundExcetion;
+import com.example.bankingapp.dto.ErrorObjectForValidations;
+import com.example.bankingapp.exception.accountexception.AccounrCreationException;
+import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
+import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
+import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
+import com.example.bankingapp.exception.userexception.UnauthorizedAccessException;
+import com.example.bankingapp.exception.userexception.UserAlreadyExistsException;
+import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @ControllerAdvice
 public class exceptionhandler {
@@ -28,13 +37,47 @@ public class exceptionhandler {
         return new ResponseEntity<>(er , HttpStatus.CONFLICT);
     }
     @ExceptionHandler
-    public ResponseEntity<ErrorObject> Exception4(AccountNotFound e){
-        ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.NO_CONTENT.value()).timestamp(System.currentTimeMillis()).build();
-        return new ResponseEntity<>(er , HttpStatus.NO_CONTENT);
+    public ResponseEntity<ErrorObject> Exception4(NoAccountFoundException e){
+        ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.BAD_REQUEST.value()).timestamp(System.currentTimeMillis()).build();
+        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler
     public ResponseEntity<ErrorObject> Excetion(InvalidJwtToken e){
-        ErrorObject er =  ErrorObject.builder().timestamp(System.currentTimeMillis()).status(HttpStatus.REQUEST_TIMEOUT.value()).message(e.getMessage()).build();
-        return new ResponseEntity<>(er , HttpStatus.REQUEST_TIMEOUT);
+        ErrorObject er =  ErrorObject.builder().timestamp(System.currentTimeMillis()).status(HttpStatus.BAD_REQUEST.value()).message(e.getMessage()).build();
+        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler
+    public ResponseEntity<ErrorObject> Exception5(ForbiddenRequestException e){
+        ErrorObject er = ErrorObject.builder()
+                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.FORBIDDEN.value()).build();
+        return new ResponseEntity<>(er , HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorObjectForValidations> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        List<String> errors = new ArrayList<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String errorMessage = error.getDefaultMessage();
+            if (error instanceof FieldError) {
+                errorMessage = ((FieldError) error).getField() + ": " + errorMessage;
+            }
+            errors.add(errorMessage);
+        });
+
+        ErrorObjectForValidations errorObjectForValidations = new ErrorObjectForValidations("Validation Failed", errors);
+        return ResponseEntity.badRequest().body(errorObjectForValidations);
+    }
+    @ExceptionHandler()
+    public ResponseEntity<ErrorObject> handle(AccounrCreationException e){
+        ErrorObject er = ErrorObject.builder()
+                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.BAD_REQUEST.value()).build();
+        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler()
+    public ResponseEntity<ErrorObject> handle(UnauthorizedAccessException e){
+        ErrorObject er = ErrorObject.builder()
+                .message(e.getMessage()).timestamp(System.currentTimeMillis()).status(HttpStatus.UNAUTHORIZED.value()).build();
+        return new ResponseEntity<>(er , HttpStatus.UNAUTHORIZED);
+    }
+
 }
