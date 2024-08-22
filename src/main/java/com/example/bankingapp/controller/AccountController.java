@@ -31,7 +31,7 @@ public class AccountController {
     }
     @PostMapping("user/{userId}/account")
     ResponseEntity<AccountDTO> create(@PathVariable UUID userId ,  @Valid @RequestBody  AccountDTO accountDTO , @RequestHeader("Authorization") String token) throws Exception {
-        AccountDTO createdAccount = accountService.createaccount(userId , accountDTO , token);
+        AccountDTO createdAccount = accountService.createAccount(userId , accountDTO , token);
         return new ResponseEntity<>(createdAccount , HttpStatus.CREATED);
     }
     @PutMapping("user/account/{accountId}")

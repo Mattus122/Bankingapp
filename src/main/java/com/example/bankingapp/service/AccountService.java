@@ -32,34 +32,70 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final ValidationService validationService;
 
-    public AccountDTO createaccount (UUID userId, AccountDTO accountDTO , String token) throws Exception {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        if(validationService.returnRole(token).equals("USER")){
-            throw new ForbiddenRequestException("Access denied for desired operation");
-        }
-        Optional<User> findbyid = userRepository.findById(userId);
-        User user ;
-        if (findbyid.get().getRole().equals(Role.ADMIN)) {
-            throw new AccounrCreationException("Admin Cannot create an account for himself");
-        }
-        user = findbyid.get();
-        if (findbyid.isPresent()) {
-            Account acc = Account.builder().name(accountDTO.getName())
-                    .balance(accountDTO.getBalance()).
-                    currency(accountDTO.getCurrency()).
-                    accountStatus(accountDTO.getAccountStatus())
-                    .user(user)
-                    .build();
-            Account newaccount = accountRepository.save(acc);
-            return convertEntityTOAccountDto(newaccount);
-
-        } else {
-            throw new UserNotFoundExcetion("User Not Found at given id : "+userId);
-        }
+//    public AccountDTO createaccount (UUID userId, AccountDTO accountDTO , String token) throws Exception {
+//        if (token.startsWith("Bearer ")) {
+//            token = token.substring(7);
+//        }
+//        if(validationService.returnRole(token).equals("USER")){
+//            throw new ForbiddenRequestException("Access denied for desired operation");
+//        }
+//        Optional<User> findbyid = userRepository.findById(userId);
+//        User user ;
+//        if(!findbyid.isPresent()){
+//            throw new UserNotFoundExcetion("no user found for id : "+userId);
+//        }
+//        if (findbyid.get().getRole().equals(Role.ADMIN)) {
+//            throw new ForbiddenRequestException("Admin Cannot create an account for himself");
+//        }
+//        user = findbyid.get();
+//        if (findbyid.isPresent()) {
+//            Account acc = Account.builder().name(accountDTO.getName())
+//                    .balance(accountDTO.getBalance()).
+//                    currency(accountDTO.getCurrency()).
+//                    accountStatus(accountDTO.getAccountStatus())
+//                    .user(user)
+//                    .build();
+//            Account newaccount = accountRepository.save(acc);
+//            return convertEntityTOAccountDto(newaccount);
+//
+//        }
+////        else {
+////            throw new UserNotFoundExcetion("User Not Found at given id : "+userId);
+////        }
+//        return null;
+//    }
+public AccountDTO createAccount(UUID userId, AccountDTO accountDTO, String token) throws Exception {
+    // Remove "Bearer " prefix if present
+    if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
     }
 
+    // Check if the user has the "USER" role
+    if (validationService.returnRole(token).equals("USER")) {
+        throw new ForbiddenRequestException("Access denied for the desired operation");
+    }
+
+    // Find the user by ID
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundExcetion("No user found for ID: " + userId));
+
+    // Check if the user is an admin
+    if (user.getRole().equals(Role.ADMIN)) {
+        throw new ForbiddenRequestException("Admin cannot create an account for themselves");
+    }
+
+    // Create and save the account
+    Account account = Account.builder()
+            .name(accountDTO.getName())
+            .balance(accountDTO.getBalance())
+            .currency(accountDTO.getCurrency())
+            .accountStatus(accountDTO.getAccountStatus())
+            .user(user)
+            .build();
+
+    Account newAccount = accountRepository.save(account);
+    return convertEntityTOAccountDto(newAccount);
+}
 
 
     public List<AccountDTO> getAccountInformation(UUID userId , String token) throws Exception {

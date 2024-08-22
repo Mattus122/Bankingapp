@@ -21,11 +21,11 @@ import java.util.List;
 
 @ControllerAdvice
 public class exceptionhandler {
-    @ExceptionHandler
-    public ResponseEntity<ErrorObject> handleExcetion(Exception e){
-        ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.BAD_REQUEST.value()).timestamp(System.currentTimeMillis()).build();
-        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
-    }
+//    @ExceptionHandler
+//    public ResponseEntity<ErrorObject> handleExcetion(Exception e){
+//        ErrorObject er = ErrorObject.builder().message(e.getMessage()).status(HttpStatus.BAD_REQUEST.value()).timestamp(System.currentTimeMillis()).build();
+//        return new ResponseEntity<>(er , HttpStatus.BAD_REQUEST);
+//    }
     @ExceptionHandler
     public ResponseEntity<ErrorObject> Excetion2(UserNotFoundExcetion ex){
         ErrorObject er = ErrorObject.builder().message(ex.getMessage()).status(HttpStatus.NOT_FOUND.value()).timestamp(System.currentTimeMillis()).build();

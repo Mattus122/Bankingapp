@@ -37,7 +37,7 @@ public class UserService {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        if(validationService.validateToken(token , "POST")){
+        validationService.validateToken(token , "POST");
             User newUser  = User.builder().firstName(userDTO.getFirstName()).lastName(userDTO.getLastName())
                     .role(userDTO.getRole()).email(userDTO.getEmail()).password(userDTO.getPassword()).age(userDTO.getAge())
                     .build();
@@ -49,8 +49,7 @@ public class UserService {
             User savedUser = userRepository.save(newUser);
             return convertToDTO(newUser);
 
-        }
-        return null;
+
     }
 
     @Timed
@@ -103,13 +102,15 @@ public class UserService {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        if(validationService.validateToken(token , "DELETE")){
-            if (userRepository.existsById(userId)) {
-                userRepository.deleteById(userId);
-            } else {
-                throw new UserNotFoundExcetion("User not found with id: " + userId);
-            }
+        validationService.validateToken(token , "DELETE");
+        Optional<User> findUser = userRepository.findById(userId);
+        if(findUser.isPresent()){
+            userRepository.deleteById(userId);
         }
+        else {
+            throw new UserNotFoundExcetion("User not found with id: " + userId);
+        }
+
 
     }
     @Timed
