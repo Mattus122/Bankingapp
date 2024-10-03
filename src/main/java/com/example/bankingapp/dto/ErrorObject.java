@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ErrorObject {
-
     private int status;
     private String message;
     private Long timestamp;

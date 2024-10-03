@@ -6,8 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,22 +20,26 @@ public class Account {
     @Column(name = "account_id")
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID accountId;
-
     @Column(name = "account_name")
     private String name;
-
     @Column(name = "account_balance")
     private int balance;
     @Column(name = "account_currency")
     private String currency;
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus;
-
-    @ManyToOne(fetch = FetchType.LAZY)//fetch type is eager by default
+    @Column(name = "bank_holder_name")
+    private String bankHolderName;
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;
     @JsonIgnore
     @OneToMany(mappedBy = "account",cascade = CascadeType.ALL, fetch = FetchType.EAGER , orphanRemoval = true)
     private List<Transaction> transaction;
+    public void setBankHolderNameFromUser() {
+        if (user != null) {
+            this.bankHolderName = user.getFirstName() + " " + user.getLastName();
+        }
+    }
 }

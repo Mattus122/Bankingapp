@@ -1,56 +1,72 @@
 package com.example.bankingapp.controller;
 
-import com.example.bankingapp.dto.JwtTokenDTO;
-import com.example.bankingapp.dto.JwtTokenResponse;
-import com.example.bankingapp.dto.ResponseUserDTO;
-import com.example.bankingapp.dto.UserDTO;
+import com.example.bankingapp.aspect.RoleCheck;
+import com.example.bankingapp.dto.*;
+import com.example.bankingapp.entity.OrganisationName;
+import com.example.bankingapp.entity.Role;
+import com.example.bankingapp.entity.User;
 import com.example.bankingapp.service.UserService;
-import jakarta.persistence.TableGenerator;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.UUID;
 
+import java.util.*;
+
+@Slf4j
 @RestController
 @RequestMapping("/v1")
 @RequiredArgsConstructor
-
-@Tag(name = "User" , description = "User Management Api ")
+@Tag(name = "User",description = "User Management Api ")
 public class UserController {
     private final UserService userService;
     @PostMapping("/user")
-    public ResponseEntity<ResponseUserDTO> adduser (@RequestBody @Valid UserDTO userDTO, @RequestHeader("Authorization") String token ) throws Exception {
-        ResponseUserDTO createdUser  = userService.add(userDTO, token , "POST");
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+    @RoleCheck(roles = {Role.SUPERADMIN,Role.BANKADMIN})
+    ResponseEntity<ResponseUserDTO> adduser(@RequestBody @Valid UserDTO userDTO,
+                                            @RequestHeader("Authorization")String token) {
+        return new ResponseEntity<>(userService.add(userDTO,token),HttpStatus.CREATED);
+    }
+    @GetMapping("/filter")
+    @RoleCheck(roles = {Role.SUPERADMIN, Role.BANKADMIN})
+    public ResponseEntity<List<User>> filterUsers(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(value = "organisationName", required = false) OrganisationName organisationName,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate,
+            @RequestParam(value = "firstName", required = false) String firstName) {
+
+        List<User> users = userService.filterUserByParameters(token, organisationName, startDate, endDate, firstName);
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<List<ResponseUserDTO>> allusers (@RequestHeader("Authorization") String token) {
-        List<ResponseUserDTO> responseUserDTOList = userService.returnAllUser(token);
-        if (responseUserDTOList.isEmpty()) {
-            return new ResponseEntity<>(responseUserDTOList, HttpStatus.NO_CONTENT);
-        }
-        return new ResponseEntity<>(responseUserDTOList, HttpStatus.OK);
+    @GetMapping("/allUser")
+    @RoleCheck(roles = {Role.SUPERADMIN,Role.BANKADMIN})
+    ResponseEntity<List<UserDetailsDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
+        return new ResponseEntity<>(userService.allUserByOrganisationName(token),HttpStatus.OK);
     }
-    @GetMapping ("/user/{userId}")
-    ResponseEntity<ResponseUserDTO> userById(@PathVariable UUID userId , @RequestHeader("Authorization") String token){
-        ResponseUserDTO user = userService.findUserById(userId , token);
-        return new ResponseEntity<>(user , HttpStatus.FOUND);
+    @GetMapping("/user/{userId}")
+    ResponseEntity<UserDetailsDTO> fetchUserById(@PathVariable UUID userId,
+                                                  @RequestHeader("Authorization")String token){
+        UserDetailsDTO userDetailsDTO = userService.findUserById(userId,token);
+        return new ResponseEntity<>(userDetailsDTO,HttpStatus.FOUND);
     }
     @PutMapping("/user/{userId}")
-    public ResponseEntity<ResponseUserDTO> updateuser (@RequestBody @Valid UserDTO userDTO , @PathVariable UUID userId , @RequestHeader("Authorization") String token) {
-        ResponseUserDTO updatedUser = userService.updateUser(userId, userDTO , token ,"PUT");
+    @RoleCheck(roles = {Role.SUPERADMIN,Role.BANKADMIN})
+    ResponseEntity<ResponseUserDTO> updateUser(@PathVariable UUID userId,
+                                               @RequestBody @Valid UpdateUserDTO updateUserDTO,
+                                               @RequestHeader("Authorization")String token){
+        ResponseUserDTO updatedUser = userService.updateUser(token,userId,updateUserDTO);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
     @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> deleteUserById(@PathVariable UUID userId , @RequestHeader("Authorization") String token) {
-        userService.deleteUserById(userId , token , "DELETE");
+    @RoleCheck(roles = {Role.SUPERADMIN,Role.BANKADMIN})
+    ResponseEntity<Void> deleteUserById(@PathVariable UUID userId,
+                                        @RequestHeader("Authorization")String token){
+        userService.deleteUserById(userId, token);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-
     }
-
 }

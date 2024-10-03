@@ -1,148 +1,99 @@
 package com.example.bankingapp.service;
 
 import com.example.bankingapp.controller.UserController;
-import com.example.bankingapp.dto.JwtTokenDTO;
-import com.example.bankingapp.dto.JwtTokenResponse;
-import com.example.bankingapp.dto.ResponseUserDTO;
-import com.example.bankingapp.dto.UserDTO;
+import com.example.bankingapp.dto.*;
+import com.example.bankingapp.entity.OrganisationName;
+import com.example.bankingapp.entity.Role;
 import com.example.bankingapp.entity.User;
-import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
-import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
-import com.example.bankingapp.exception.userexception.UserAlreadyExistsException;
-import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
-import com.example.bankingapp.repository.AccountRepository;
-import com.example.bankingapp.repository.TransactionRepository;
+import com.example.bankingapp.exception.UserAlreadyExistsException;
+import com.example.bankingapp.exception.UserNotFoundException;
 import com.example.bankingapp.repository.UserRepository;
 import com.example.bankingapp.timedinterface.Timed;
-import com.example.bankingapp.validation.ValidationService;
+import com.example.bankingapp.validation.UserValidationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final AccountRepository accountRepository;
     private final UserRepository userRepository;
-    private final JwtService jwtService;
-    private final ValidationService validationService;
-    private final TransactionRepository transactionRepository;
+    private final UserValidationService userValidationService;
     Logger logger = LoggerFactory.getLogger(UserController.class);
     @Timed
-    public ResponseUserDTO add(UserDTO userDTO, String token , String requestType) throws Exception {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        validationService.validateToken(token , "POST");
-            User newUser  = User.builder().firstName(userDTO.getFirstName()).lastName(userDTO.getLastName())
-                    .role(userDTO.getRole()).email(userDTO.getEmail()).password(userDTO.getPassword()).age(userDTO.getAge())
-                    .build();
-            String email = newUser.getEmail();
-            Optional<User> existingUser = userRepository.findByEmail(email);
-            if (existingUser.isPresent()) {
-                throw new UserAlreadyExistsException("User already exists in the database.");
-            }
-            User savedUser = userRepository.save(newUser);
-            return convertToDTO(newUser);
-
-
-    }
-
-    @Timed
-    public List<ResponseUserDTO> returnAllUser(String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        if(validationService.validateToken(token , "GET") && validationService.returnRole(token).equals("ADMIN")){
-            List<User> users = userRepository.findAll();
-            return users.stream()
-                    .map(this::convertToDTO )
-                    .collect(Collectors.toList());
-        } else  {
-            List<ResponseUserDTO> responseUserDTOList = new ArrayList<>();
-            String email = validationService.getEmailFromToken(token);
-            Optional<User> user= userRepository.findByEmail(email);
-            ResponseUserDTO responseUserDTO = convertToDTO(user.get());
-            responseUserDTOList.add(responseUserDTO);
-            return responseUserDTOList;
-        }
-    }
-
-    @Timed
-    public ResponseUserDTO updateUser(UUID userId, UserDTO userDTO , String token , String requestType) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        if(validationService.validateToken(token , "PUT")){
-            Optional<User> userOptional = userRepository.findById(userId);
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                user.setFirstName(userDTO.getFirstName());
-                user.setLastName(userDTO.getLastName());
-                user.setEmail(userDTO.getEmail());
-                user.setPassword(userDTO.getPassword());
-                user.setRole(userDTO.getRole());
-                user.setAge(userDTO.getAge());
-                User updatedUser = userRepository.save(user);
-                return convertToDTO(updatedUser);
-            } else {
-                throw new UserNotFoundExcetion("User not found with id: " + userId);
-            }
-        }
-        throw new InvalidJwtToken("Pata nhi kya hua ");
-
-
-    }
-    @Timed
-    public void deleteUserById(UUID userId , String token  , String requestType) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        validationService.validateToken(token , "DELETE");
-        Optional<User> findUser = userRepository.findById(userId);
+    public ResponseUserDTO add(UserDTO userDTO,String token){
+        Optional<User> findUser = userRepository.findByEmail(userDTO.getEmail());
+        userValidationService.validatePostCreation(token,userDTO);
         if(findUser.isPresent()){
-            userRepository.deleteById(userId);
+            throw new UserAlreadyExistsException("User Already present in database");
         }
-        else {
-            throw new UserNotFoundExcetion("User not found with id: " + userId);
-        }
-
-
+        User newUser = User.builder()
+                .firstName(userDTO.getFirstName())
+                .lastName(userDTO.getLastName())
+                .role(userDTO.getRole())
+                .email(userDTO.getEmail())
+                .password(userDTO.getPassword())
+                .age(userDTO.getAge())
+                .organisationName(userDTO.getOrganisationName())
+                .build();
+        User savedUser = userRepository.save(newUser);
+        return convertToDTO(savedUser);
     }
     @Timed
-    public ResponseUserDTO findUserById(UUID userId , String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        if(validationService.returnRole(token).equals("USER")){
-            String email = validationService.getEmailFromToken(token);
-            Optional<User> optionalUser = userRepository.findByEmail(email);
-            if(optionalUser.get().getId().equals(userId)){
-                ResponseUserDTO responseUserDTO = convertToDTO(optionalUser.get());
-                return responseUserDTO;
-            }
-            throw new ForbiddenRequestException("Cannot Access other Users Information");
-
-        } else if (validationService.returnRole(token).equals("ADMIN")) {
-            Optional<User> byId = userRepository.findById(userId);
-            if(byId.isPresent()){
-                ResponseUserDTO responseUserDTO = convertToDTO(byId.get());
-                return responseUserDTO;
-            }
-            else{
-                throw new UserNotFoundExcetion("No user found at gven id : "+userId);
-            }
-        }
-        return null;
-
+    public ResponseUserDTO updateUser(String token,UUID userId,UpdateUserDTO updateUserDTO){
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: "+userId));
+        userValidationService.validateUpdation(token,existingUser);
+        existingUser.setFirstName(updateUserDTO.getFirstName());
+        existingUser.setLastName(updateUserDTO.getLastName());
+        existingUser.setPassword(updateUserDTO.getPassword());
+        existingUser.setAge(updateUserDTO.getAge());
+        User updatedUser = userRepository.save(existingUser);
+        return convertToDTO(updatedUser);
     }
     @Timed
+    public void deleteUserById(UUID userId,String token) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+        userValidationService.validateDeletion(token,user);
+        userRepository.deleteById(userId);
+    }
+    @Timed
+    public UserDetailsDTO findUserById(UUID userId,String token) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("no user found"));
+        userValidationService.getUserById(token,user);
+        return UserDetailsDTO.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .userId(user.getId())
+                .age(user.getAge())
+                .role(user.getRole())
+                .organisationName(user.getOrganisationName())
+                .accountList(user.getAccounts())
+                .build();
+    }
+    public List<UserDetailsDTO> allUserByOrganisationName(String token){
+        OrganisationName organisationNameFromToken = userValidationService.validateGetAllUserByOrgName(token);
+        List<User> usersList = new ArrayList<>();
+        for(User u : userRepository.findAll()){
+            if(u.getOrganisationName().equals(organisationNameFromToken)
+                    &&(u.getRole().equals(Role.BANKADMIN)
+                    ||u .getRole().equals(Role.USER))){usersList.add(u);}
+        }
+        return usersList.stream()
+                    .map(this::convertToUserDetailsDTO)
+                    .collect(Collectors.toList());
+    }
     private ResponseUserDTO convertToDTO(User user) {
         ResponseUserDTO responseUserDTO = new ResponseUserDTO();
+        responseUserDTO.setOrganisationName(user.getOrganisationName());
+        responseUserDTO.setCreationTimeStamp(user.getCreationTimeStamp());
         responseUserDTO.setId(user.getId());
         responseUserDTO.setRole(user.getRole());
         responseUserDTO.setEmail(user.getEmail());
@@ -150,7 +101,23 @@ public class UserService {
         responseUserDTO.setLastName(user.getLastName());
         return responseUserDTO;
     }
-
-
-
+    private UserDetailsDTO convertToUserDetailsDTO(User user){
+        return UserDetailsDTO.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .userId(user.getId())
+                .age(user.getAge())
+                .role(user.getRole())
+                .organisationName(user.getOrganisationName())
+                .accountList(user.getAccounts())
+                .build();
+    }
+    public List<User> filterUserByParameters(String token, OrganisationName organisationName
+            ,Date startDate,Date endDate,String firstName){
+        UserFilterDTO userFilterDTO=userValidationService.validateFilterUser(token,organisationName,startDate,endDate,firstName);
+        return userRepository.findUsersByParams(userFilterDTO.getOrganisationName()
+                                                ,userFilterDTO.getStartDate(),userFilterDTO.getEndDate()
+                                                ,userFilterDTO.getFirstName());
+    }
 }

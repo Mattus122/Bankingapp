@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,8 +21,8 @@ public class TransactionDTO {
     private int transactionAmount;
     @NotNull(message = "Transaction Type  cannot be null")
     private TransactionType transactionType;
+    private UUID creditor;
     @NotNull
     @Size(min = 3, max = 3, message = "Currency must be a 3-character code")
     private String currency;
-
 }

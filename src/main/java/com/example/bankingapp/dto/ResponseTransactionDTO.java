@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -14,11 +15,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResponseTransactionDTO {
-
     private UUID transactionId;
+    private UUID creditor;
+    private Date creationTimeStamp;
     private int transactionAmount;
     private String transactionMessage;
-
     private TransactionType transactionType;
     private TransactionStatus transactionStatus;
 }

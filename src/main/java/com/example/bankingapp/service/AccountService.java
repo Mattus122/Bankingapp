@@ -1,139 +1,65 @@
 package com.example.bankingapp.service;
 
 import com.example.bankingapp.dto.AccountDTO;
+import com.example.bankingapp.dto.UpdateAccountDTO;
 import com.example.bankingapp.entity.Account;
-import com.example.bankingapp.entity.Role;
 import com.example.bankingapp.entity.User;
-import com.example.bankingapp.exception.accountexception.AccounrCreationException;
-import com.example.bankingapp.exception.accountexception.NoAccountFoundException;
-import com.example.bankingapp.exception.jwtExcetion.ForbiddenRequestException;
-import com.example.bankingapp.exception.jwtExcetion.InvalidJwtToken;
-import com.example.bankingapp.exception.userexception.UserNotFoundExcetion;
+import com.example.bankingapp.exception.NoAccountFoundException;
+import com.example.bankingapp.exception.UserNotFoundException;
 import com.example.bankingapp.repository.AccountRepository;
 import com.example.bankingapp.repository.UserRepository;
-import com.example.bankingapp.validation.ValidationService;
+import com.example.bankingapp.validation.AccountValidationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import javax.security.auth.login.AccountNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Tag(name = "Account Managemant Api")
+@Tag(name = "Account Management Api")
 public class AccountService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
-    private final ValidationService validationService;
-
-//    public AccountDTO createaccount (UUID userId, AccountDTO accountDTO , String token) throws Exception {
-//        if (token.startsWith("Bearer ")) {
-//            token = token.substring(7);
-//        }
-//        if(validationService.returnRole(token).equals("USER")){
-//            throw new ForbiddenRequestException("Access denied for desired operation");
-//        }
-//        Optional<User> findbyid = userRepository.findById(userId);
-//        User user ;
-//        if(!findbyid.isPresent()){
-//            throw new UserNotFoundExcetion("no user found for id : "+userId);
-//        }
-//        if (findbyid.get().getRole().equals(Role.ADMIN)) {
-//            throw new ForbiddenRequestException("Admin Cannot create an account for himself");
-//        }
-//        user = findbyid.get();
-//        if (findbyid.isPresent()) {
-//            Account acc = Account.builder().name(accountDTO.getName())
-//                    .balance(accountDTO.getBalance()).
-//                    currency(accountDTO.getCurrency()).
-//                    accountStatus(accountDTO.getAccountStatus())
-//                    .user(user)
-//                    .build();
-//            Account newaccount = accountRepository.save(acc);
-//            return convertEntityTOAccountDto(newaccount);
-//
-//        }
-////        else {
-////            throw new UserNotFoundExcetion("User Not Found at given id : "+userId);
-////        }
-//        return null;
-//    }
-public AccountDTO createAccount(UUID userId, AccountDTO accountDTO, String token) throws Exception {
-    // Remove "Bearer " prefix if present
-    if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
+    private final AccountValidationService accountValidationService;
+    public Account createAccount(UUID userId,AccountDTO accountDTO,String token){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: "+userId));
+        accountValidationService.validateAccountPostCreation(token,user);
+        Account account=Account .builder()
+                                .name(accountDTO.getName())
+                                .balance(accountDTO.getBalance())
+                                .currency(accountDTO.getCurrency())
+                                .accountStatus(accountDTO.getAccountStatus())
+                                .user(user)
+                                .build();
+        account.setBankHolderNameFromUser();
+        return accountRepository.save(account);
     }
-
-    // Check if the user has the "USER" role
-    if (validationService.returnRole(token).equals("USER")) {
-        throw new ForbiddenRequestException("Access denied for the desired operation");
+    public List<Account> getAccountInformation(UUID userId,String token){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+        accountValidationService.validateAccountInfo(token,user);
+        return new ArrayList<>(user.getAccounts());
     }
-
-    // Find the user by ID
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UserNotFoundExcetion("No user found for ID: " + userId));
-
-    // Check if the user is an admin
-    if (user.getRole().equals(Role.ADMIN)) {
-        throw new ForbiddenRequestException("Admin cannot create an account for themselves");
+    public AccountDTO updateAccount(UUID accountId,UpdateAccountDTO updateAccountDTO,String token){
+        Account updateAccount = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoAccountFoundException("Account not found with id: "+accountId));
+        accountValidationService.validateAccountUpdation(token,updateAccount);
+        updateAccount.setName(updateAccountDTO.getName());
+        updateAccount.setCurrency(updateAccountDTO.getCurrency());
+        updateAccount.setAccountStatus(updateAccountDTO.getAccountStatus());
+        updateAccount = accountRepository.save(updateAccount);
+        return convertEntityTOAccountDto(updateAccount);
     }
-
-    // Create and save the account
-    Account account = Account.builder()
-            .name(accountDTO.getName())
-            .balance(accountDTO.getBalance())
-            .currency(accountDTO.getCurrency())
-            .accountStatus(accountDTO.getAccountStatus())
-            .user(user)
-            .build();
-
-    Account newAccount = accountRepository.save(account);
-    return convertEntityTOAccountDto(newAccount);
-}
-
-
-    public List<AccountDTO> getAccountInformation(UUID userId , String token) throws Exception {
-
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        String email = validationService.getEmailFromToken(token);
-        Optional<User> userOptional = userRepository.findByEmail(email);
-         List<AccountDTO> accountDTOList = new ArrayList<>();
-        if(validationService.returnRole(token).equals("USER")){
-            if(!userOptional.get().getId().equals(userId)){
-                // this is a 403 or 401
-                throw new ForbiddenRequestException("Cannot Access Other Users Account Information");
-            }
-            accountDTOList= getAccountListDTO(userId , email);
-            return accountDTOList;
-        }
-        else {
-            accountDTOList = getAccountListDTO(userId , email);
-            return accountDTOList;
-        }
-
-
-
-    }
-    private List<AccountDTO> getAccountListDTO( UUID userId, String email) throws AccountNotFoundException {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if(userOptional.isPresent()){
-            List<Account> accounts = accountRepository.findByUserId(userId);
-            if(accounts.isEmpty()){
-                throw new AccountNotFoundException("No account exists for id : " +userId);
-            }
-            return accounts.stream()
-                    .map(this::convertEntityTOAccountDto)
-                    .collect(Collectors.toList());
-        }
-        return null;
+    public void deleteAccount(UUID accountId,String token){
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NoAccountFoundException("Account not found with id: "+accountId));
+        accountValidationService.validateAccountDeletion(token,account);
+        accountRepository.deleteById(accountId);
     }
     public AccountDTO convertEntityTOAccountDto(Account account){
         AccountDTO accountDto = new AccountDTO();
@@ -143,43 +69,5 @@ public AccountDTO createAccount(UUID userId, AccountDTO accountDTO, String token
         accountDto.setName(account.getName());
         accountDto.setBalance(account.getBalance());
         return accountDto;
-    }
-
-    public AccountDTO updateAccount(UUID accountId, AccountDTO accountDTO , String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        if(validationService.validateToken(token , "PUT")){
-            Optional<Account> accountOptional = accountRepository.findById(accountId);
-
-            if (!accountOptional.isPresent()) {
-                throw new NoAccountFoundException("Account not found with id: " + accountId);
-            }
-
-            Account account = accountOptional.get();
-            account.setName(accountDTO.getName());
-            account.setBalance(accountDTO.getBalance());
-            account.setCurrency(accountDTO.getCurrency());
-            account.setAccountStatus(accountDTO.getAccountStatus());
-            Account updatedAccount = accountRepository.save(account);
-
-            return convertEntityTOAccountDto(updatedAccount);
-        }
-        throw new InvalidJwtToken("Pata nhi kya hua ");
-    }
-
-    public void deleteAccount(UUID accountId , String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-
-        validationService.validateToken(token, "DELETE");
-            if (accountRepository.existsById(accountId)) {
-                accountRepository.deleteById(accountId);
-            } else {
-                throw new NoAccountFoundException("Accounnt not found with id: " + accountId);
-            }
-
-
     }
 }
